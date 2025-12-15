@@ -1,35 +1,21 @@
 
 import * as admin from 'firebase-admin';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
 
-let serviceAccount: admin.ServiceAccount;
+if (getApps().length === 0) {
+  // This is the recommended secure way to initialize the Admin SDK.
+  // It uses environment variables, which are set in your hosting environment.
+  // This prevents your private key from being checked into source control.
+  const credential = cert({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    // When storing the private key in an environment variable, newlines
+    // must be escaped. The 'replace' function un-escapes them.
+    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+  });
 
-// Check if the service account key is available as an environment variable
-if (process.env.SERVICE_ACCOUNT) {
-  try {
-    // Parse the service account key from the environment variable
-    serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT);
-  } catch (error) {
-    console.error('Error parsing SERVICE_ACCOUNT environment variable:', error);
-    process.exit(1);
-  }
-} else {
-  // Fallback to requiring the file for local development
-  try {
-    // We are using require here because the service account key is a JSON file.
-    // Using a direct import can sometimes cause issues with module resolution.
-    serviceAccount = require('../../../serviceAccountKey.json');
-  } catch (error) {
-    console.error('serviceAccountKey.json not found. Please set the SERVICE_ACCOUNT environment variable or create the file for local development.');
-    process.exit(1);
-  }
-}
-
-
-// Check if the app is already initialized to prevent errors.
-if (admin.apps.length === 0) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    projectId: serviceAccount.project_id,
+  initializeApp({
+    credential,
   });
 }
 

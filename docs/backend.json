@@ -1,0 +1,146 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user of the application.",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "type": "string",
+          "description": "The user's full name."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The user's email address, used for login for Admin/Manager."
+        },
+        "regimentalNumber": {
+          "type": "string",
+          "description": "The user's regimental number (for cadets only)."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["cadet", "admin", "manager"],
+          "description": "The user's role."
+        },
+        "phone": {
+            "type": "string",
+            "description": "The user's phone number."
+        },
+        "year": {
+            "type": "number",
+            "description": "The user's year of study (for cadets)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["displayName", "email", "role", "createdAt", "updatedAt"]
+    },
+    "Camp": {
+      "title": "Camp",
+      "description": "An NCC training camp.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "location": { "type": "string" },
+        "startDate": { "type": "string", "format": "date" },
+        "endDate": { "type": "string", "format": "date" },
+        "createdBy": { "type": "string", "description": "UID of the admin who created the camp." },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "location", "startDate", "endDate", "createdBy", "createdAt", "updatedAt"]
+    },
+    "CampRegistration": {
+      "title": "Camp Registration",
+      "description": "A cadet's registration for a camp.",
+      "type": "object",
+      "properties": {
+        "campId": { "type": "string" },
+        "uid": { "type": "string", "description": "The UID of the cadet registering." },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "processedBy": { "type": "string", "description": "UID of the admin who processed the request." },
+        "processedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["campId", "uid", "status", "createdAt"]
+    },
+    "Attendance": {
+        "title": "Attendance",
+        "description": "An attendance record for a cadet.",
+        "type": "object",
+        "properties": {
+            "campId": { "type": "string", "description": "Optional camp ID if attendance is for a camp." },
+            "uid": { "type": "string", "description": "The UID of the cadet." },
+            "date": { "type": "string", "format": "date" },
+            "status": { "type": "string", "enum": ["present", "absent"] },
+            "markedBy": { "type": "string", "description": "UID of the admin who marked attendance." },
+            "markedAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["uid", "date", "status", "markedBy", "markedAt"]
+    },
+    "AuditLog": {
+        "title": "Audit Log",
+        "description": "A log of important system actions.",
+        "type": "object",
+        "properties": {
+            "actorUid": { "type": "string" },
+            "action": { "type": "string" },
+            "targetId": { "type": "string" },
+            "meta": { "type": "object" },
+            "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "required": ["actorUid", "action", "timestamp"]
+    },
+    "Event": {
+      "title": "Event",
+      "description": "A unit event, like a parade or a special function.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "location": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string", "description": "UID of the admin who created the event." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "date", "createdBy", "createdAt"]
+    }
+  },
+  "auth": {
+    "providers": ["password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores public profiles for all users."
+    },
+    "/camps/{campId}": {
+      "schema": { "$ref": "#/entities/Camp" },
+      "description": "Stores information about all training camps."
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "#/entities/Event" },
+      "description": "Stores all unit events."
+    },
+    "/registrations/{registrationId}": {
+        "schema": { "$ref": "#/entities/CampRegistration"},
+        "description": "Stores all camp registrations."
+    },
+    "/attendance/{attendanceId}": {
+        "schema": { "$ref": "#/entities/Attendance" },
+        "description": "Stores all attendance records."
+    },
+    "/auditLogs/{logId}": {
+        "schema": { "$ref": "#/entities/AuditLog" },
+        "description": "Stores system-wide audit logs."
+    }
+  }
+}

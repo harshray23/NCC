@@ -1,0 +1,189 @@
+/**
+ * @fileoverview Firestore Security Rules for NCC application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a role-based access control model with ownership checks where appropriate.
+ * Admins have broad access, managers have limited access, and cadets have restricted access to their own data.
+ *
+ * Data Structure:
+ * - /users/{userId}: Stores user profiles.
+ * - /camps/{campId}: Stores camp information.
+ * - /events/{eventId}: Stores event information.
+ * - /registrations/{registrationId}: Stores camp registration data.
+ * - /attendance/{attendanceId}: Stores attendance records.
+ * - /auditLogs/{logId}: Stores system-wide audit logs.
+ *
+ * Key Security Decisions:
+ * - Users can only read their own profile data.
+ * - Camp, event, registration and attendance data can only be created/modified by admins or managers.
+ * - Audit logs can only be written by the application; clients cannot create or modify them.
+ *
+ * Denormalization for Authorization:
+ *  - Camp documents denormalize the creator's UID in the `createdBy` field.
+ *  - Event documents denormalize the creator's UID in the `createdBy` field.
+ *  - CampRegistration documents denormalize the cadet's UID in the `uid` field and camp id in the `campId` field.
+ *  - Attendance documents denormalize the cadet's UID in the `uid` field.
+ *
+ * Structural Segregation:
+ *  - N/A
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Manages user profiles, restricting access to owner only.
+     * @path /users/{userId}
+     * @allow (get, list) User with matching {userId} can read profile.
+     * @allow (create) User with matching {userId} can create profile.
+     * @allow (update) User with matching {userId} can update profile.
+     * @deny (get, list) User without matching {userId} cannot read profile.
+     * @deny (create) User without matching {userId} cannot create profile.
+     * @deny (update, delete) User without matching {userId} cannot update or delete profile.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+      function isExistingOwner(userId) {
+          return isOwner(userId);
+      }
+      allow get, list: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == request.auth.uid;
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages training camps, allowing admins/managers to create/modify and anyone to read.
+     * @path /camps/{campId}
+     * @allow (get, list) Anyone can read camp details.
+     * @allow (create) Admin/Manager can create new camps. Must set createdBy = request.auth.uid.
+     * @allow (update, delete) Admin/Manager who created the camp can modify/delete it.
+     * @deny (create) Non-admin/non-manager cannot create camps.
+     * @deny (update, delete) Non-admin/non-manager cannot modify/delete camps.
+     * @principle Public read, owner-only writes for camps.
+     */
+    match /camps/{campId} {
+      function isAdmin() {
+          return request.auth.token.role == 'admin';
+      }
+      function isManager() {
+          return request.auth.token.role == 'manager';
+      }
+      function isAdminOrManager() {
+          return isAdmin() || isManager();
+      }
+      function isCampOwner(camp) {
+        return camp.data.createdBy == request.auth.uid;
+      }
+      function isExistingCampOwner() {
+          return isCampOwner(resource);
+      }
+      allow get, list: if true;
+      allow create: if isAdminOrManager() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdminOrManager() && isExistingCampOwner();
+      allow delete: if isAdminOrManager() && isExistingCampOwner();
+    }
+
+    /**
+     * @description Manages unit events, allowing admins/managers to create/modify and anyone to read.
+     * @path /events/{eventId}
+     * @allow (get, list) Anyone can read event details.
+     * @allow (create) Admin/Manager can create new events.  Must set createdBy = request.auth.uid.
+     * @allow (update, delete) Admin/Manager who created the event can modify/delete it.
+     * @deny (create) Non-admin/non-manager cannot create events.
+     * @deny (update, delete) Non-admin/non-manager cannot modify/delete events.
+     * @principle Public read, owner-only writes for events.
+     */
+    match /events/{eventId} {
+      function isAdmin() {
+          return request.auth.token.role == 'admin';
+      }
+      function isManager() {
+          return request.auth.token.role == 'manager';
+      }
+      function isAdminOrManager() {
+          return isAdmin() || isManager();
+      }
+      function isEventOwner(event) {
+        return event.data.createdBy == request.auth.uid;
+      }
+      function isExistingEventOwner() {
+          return isEventOwner(resource);
+      }
+      allow get, list: if true;
+      allow create: if isAdminOrManager() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdminOrManager() && isExistingEventOwner();
+      allow delete: if isAdminOrManager() && isExistingEventOwner();
+    }
+
+     /**
+      * @description Manages camp registrations, allowing admins/managers to create/modify.
+      * Cadets can only create their own registrations.
+      * @path /registrations/{registrationId}
+      * @allow (create) Cadet can create registration for themselves.
+      * @allow (get, list, update, delete) Admin/Manager can manage all registrations.
+      * @deny (create) Cadet cannot create registration for others.
+      * @deny (update, delete) Cadet cannot modify/delete registrations.
+      * @principle Role-based access control for registrations.
+      */
+    match /registrations/{registrationId} {
+        function isAdmin() {
+            return request.auth.token.role == 'admin';
+        }
+        function isManager() {
+            return request.auth.token.role == 'manager';
+        }
+        function isAdminOrManager() {
+            return isAdmin() || isManager();
+        }
+        function isRegistrationForSelf(registration) {
+            return registration.data.uid == request.auth.uid;
+        }
+        function isExistingRegistrationForSelf() {
+            return isRegistrationForSelf(resource);
+        }
+
+        allow get, list: if isAdminOrManager();
+        allow create: if request.auth.uid == request.resource.data.uid;
+        allow update: if isAdminOrManager();
+        allow delete: if isAdminOrManager();
+    }
+
+     /**
+      * @description Manages attendance records, allowing admins/managers to create/modify.
+      * @path /attendance/{attendanceId}
+      * @allow (get, list, create, update, delete) Admin/Manager can manage all attendance records.
+      * @deny (create, update, delete) Non-admin/non-manager cannot create or modify attendance records.
+      * @principle Role-based access control for attendance.
+      */
+    match /attendance/{attendanceId} {
+        function isAdmin() {
+            return request.auth.token.role == 'admin';
+        }
+        function isManager() {
+            return request.auth.token.role == 'manager';
+        }
+        function isAdminOrManager() {
+            return isAdmin() || isManager();
+        }
+
+        allow get, list: if isAdminOrManager();
+        allow create: if isAdminOrManager();
+        allow update: if isAdminOrManager();
+        allow delete: if isAdminOrManager();
+    }
+
+     /**
+      * @description Manages audit logs, allowing only the application backend to write logs.  No client access.
+      * @path /auditLogs/{logId}
+      * @deny (get, list, create, update, delete) No client can access audit logs.
+      * @principle  Backend-only access for audit logs.
+      */
+    match /auditLogs/{logId} {
+        allow read, write: if false;
+    }
+  }
+}

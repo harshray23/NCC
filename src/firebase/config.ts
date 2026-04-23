@@ -1,6 +1,3 @@
-// This file is intentionally left blank.
-// The Firebase configuration will be populated by the backend.
-// You should not touch this file.
 export const firebaseConfig = {
   apiKey: "AIzaSyC1BgiUA6DCj3fhwNbsz3GFh50cRSCAbLw",
   authDomain: "studio-8732329986-33548.firebaseapp.com",

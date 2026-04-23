@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -7,52 +6,51 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { mockUsers } from "@/lib/placeholder-data"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { useUser } from "@/firebase"
+import { useUser, useFirestore, useDoc } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { useFirestore } from "@/firebase"
+import type { User as UserDef } from "@/lib/definitions"
+import { ShieldCheck, Mail, Smartphone, User, Lock } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ManagerProfilePage() {
   const { toast } = useToast();
   const { user: authUser, loading: authLoading } = useUser();
-  // This is mock data, we should replace it with a fetch from firestore
-  const user = mockUsers.find(u => u.role === 'manager');
   const firestore = useFirestore();
+  
+  const managerPath = authUser?.uid ? `users/${authUser.uid}` : '';
+  const { data: manager, loading: managerLoading } = useDoc<UserDef>(managerPath);
 
-  const [displayName, setDisplayName] = React.useState(user?.name || "");
-  const [email, setEmail] = React.useState(user?.email || "");
-  const [password, setPassword] = React.useState("");
+  const [displayName, setDisplayName] = React.useState("");
+  const [email, setEmail] = React.useState("");
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = React.useState(user?.avatarUrl);
+  const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>("");
   const [isSaving, setIsSaving] = React.useState(false);
 
-
   React.useEffect(() => {
-     if(user) {
-        setDisplayName(user.name);
-        setEmail(user.email);
-        setAvatarUrl(user.avatarUrl);
+     if(manager) {
+        setDisplayName(manager.displayName || "");
+        setEmail(manager.email || "");
+        setAvatarUrl(manager.avatarUrl);
      }
-  }, [user]);
+  }, [manager]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 100 * 1024 * 1024) { // 100MB limit
+      if (file.size > 5 * 1024 * 1024) {
         toast({
           variant: "destructive",
-          title: "File too large",
-          description: "Please select a file smaller than 100MB.",
+          title: "ENCRYPTION LIMIT",
+          description: "Identification image must be under 5MB.",
         });
         return;
       }
       setSelectedFile(file);
-      // Create a preview URL
       const previewUrl = URL.createObjectURL(file);
       setAvatarUrl(previewUrl);
     }
@@ -60,7 +58,7 @@ export default function ManagerProfilePage() {
 
   const handleSaveChanges = async () => {
     if (!authUser || !firestore) {
-      toast({ variant: "destructive", title: "Error", description: "You must be logged in to save changes." });
+      toast({ variant: "destructive", title: "AUTH FAILURE", description: "Identity check failed." });
       return;
     }
     setIsSaving(true);
@@ -70,11 +68,10 @@ export default function ManagerProfilePage() {
       if (selectedFile) {
         const storage = getStorage();
         const storageRef = ref(storage, `profile-photos/${authUser.uid}`);
-        
-        toast({ title: "Uploading photo...", description: "Please wait." });
+        toast({ title: "UPLOADING IDENT", description: "Securing file..." });
         const snapshot = await uploadBytes(storageRef, selectedFile);
         newAvatarUrl = await getDownloadURL(snapshot.ref);
-        setAvatarUrl(newAvatarUrl); // Update avatar in UI
+        setAvatarUrl(newAvatarUrl);
       }
 
       const userDocRef = doc(firestore, "users", authUser.uid);
@@ -82,19 +79,18 @@ export default function ManagerProfilePage() {
         displayName: displayName,
         email: email,
         avatarUrl: newAvatarUrl,
-        // Password change requires re-authentication and is handled separately
+        updatedAt: new Date().toISOString()
       });
 
       toast({
-        title: "Profile Updated",
-        description: "Your changes have been saved successfully.",
+        title: "STRATEGIC DOSSIER UPDATED",
+        description: "Management records modified successfully.",
       });
     } catch (error: any) {
-      console.error("Error saving profile:", error);
       toast({
         variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: error.message || "Could not save your profile.",
+        title: "PROTOCOL ERROR",
+        description: error.message || "Could not save management records.",
       });
     } finally {
       setIsSaving(false);
@@ -102,71 +98,122 @@ export default function ManagerProfilePage() {
     }
   };
 
-
-  if (!user && !authLoading) {
+  if (authLoading || (authUser && !managerPath) || (managerPath && managerLoading)) {
     return (
-      <PageHeader
-        title="My Profile"
-        description="User not found."
-      />
-    )
+      <div className="space-y-10">
+        <PageHeader title="AUTHORIZING STRATEGIC ACCESS" description="Synchronizing manager identity..." />
+        <div className="grid gap-8 lg:grid-cols-3">
+           <Skeleton className="h-[400px] w-full bg-white/5" />
+           <Skeleton className="h-[400px] lg:col-span-2 w-full bg-white/5" />
+        </div>
+      </div>
+    );
   }
 
-  const userInitial = displayName.charAt(0);
+  if (!authUser) {
+     return (
+       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+         <div className="p-4 rounded-full bg-destructive/10 border border-destructive/20 text-destructive mb-4">
+           <Lock className="w-12 h-12" />
+         </div>
+         <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Manager Authorization Required</h1>
+         <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
+            <a href="/landing">Return to Portal</a>
+         </Button>
+       </div>
+     );
+  }
+
+  if (!manager) {
+    return <PageHeader title="DOSSIER NOT FOUND" description="Could not locate management records." />
+  }
+
+  const userInitial = displayName ? displayName.charAt(0) : 'M';
 
   return (
-    <>
+    <div className="space-y-10">
       <PageHeader
-        title="My Profile"
-        description="View and manage your personal information."
-      />
-      <Card>
-        <CardHeader>
-          <CardTitle>{displayName}</CardTitle>
-          <CardDescription>Keep your contact details up to date.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-6 md:grid-cols-3 max-w-3xl">
-            <div className="md:col-span-1 flex flex-col items-center gap-4">
-                <Avatar className="h-32 w-32">
-                    <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="person portrait" />
-                    <AvatarFallback>{userInitial}</AvatarFallback>
-                </Avatar>
-                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                    Change Photo
-                </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                    Photo must be in NCC uniform without a beret and with a white background.
-                </p>
-                {selectedFile && <p className="text-sm text-muted-foreground truncate">Selected: {selectedFile.name}</p>}
-                <Input id="picture" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
+        title="MANAGER DOSSIER"
+        description="Strategic identity and credential management."
+      >
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 border border-primary/20">
+          <ShieldCheck className="w-4 h-4 text-primary" />
+          <span className="text-[10px] font-black text-primary tracking-widest uppercase">Strategic Command</span>
+        </div>
+      </PageHeader>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        <Card className="lg:col-span-1 border-white/5 bg-black/40 backdrop-blur-md flex flex-col items-center p-8">
+          <div className="relative group">
+            <Avatar className="h-40 w-40 border-2 border-white/5 group-hover:border-primary/50 transition-all duration-500">
+              <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
+              <AvatarFallback className="text-4xl font-black bg-white/5">{userInitial}</AvatarFallback>
+            </Avatar>
+            <div className="absolute inset-0 rounded-full bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+               <User className="w-8 h-8 text-white" />
             </div>
-            <div className="md:col-span-2 grid grid-cols-2 gap-6">
-                <div className="grid gap-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                </div>
-                <div className="grid gap-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-                <div className="grid gap-2">
-                <Label htmlFor="role">Role</Label>
-                <Input id="role" value={"Manager"} readOnly disabled />
-                </div>
-                <div className="grid gap-2">
-                <Label htmlFor="password">Change Password</Label>
-                <Input id="password" type="password" placeholder="Enter new password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                </div>
-                <div className="col-span-2 flex justify-end">
-                  <Button onClick={handleSaveChanges} disabled={isSaving}>
-                    {isSaving ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                </div>
+          </div>
+          
+          <div className="mt-8 text-center space-y-1">
+            <h2 className="text-xl font-black tracking-tighter uppercase font-headline text-white">{displayName}</h2>
+            <p className="text-[10px] font-bold text-primary tracking-[0.3em] uppercase">Commanding Officer • Manager</p>
+          </div>
+
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="mt-8 w-full border-white/10 hover:bg-white/5 text-[10px] font-black tracking-widest uppercase h-11" 
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Update Photo
+          </Button>
+          <Input id="picture" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
+        </Card>
+
+        <Card className="lg:col-span-2 border-white/5 bg-black/40 backdrop-blur-md">
+          <CardHeader className="border-b border-white/5 pb-6">
+            <CardTitle className="text-sm font-black tracking-widest uppercase font-headline">Strategic Credentials</CardTitle>
+            <CardDescription className="text-[10px] uppercase tracking-widest">Update strategic identity records.</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-8 space-y-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <User className="w-3 h-3" /> Manager Name
+                </Label>
+                <Input 
+                  id="name" 
+                  value={displayName} 
+                  onChange={(e) => setDisplayName(e.target.value)} 
+                  className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Mail className="h-3 w-3" /> Secure Email
+                </Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+                />
+              </div>
             </div>
-          </form>
-        </CardContent>
-      </Card>
-    </>
+
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleSaveChanges} 
+                disabled={isSaving}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-black tracking-[0.2em] uppercase px-8 h-12"
+              >
+                {isSaving ? 'AUTHORIZING...' : 'UPDATE STRATEGIC FILE'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }

@@ -12,14 +12,16 @@ import { useUser, useDoc, useFirestore } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import type { User as UserDef } from "@/lib/definitions"
-import { ShieldCheck, Mail, Smartphone, User, Shield } from "lucide-react"
+import { ShieldCheck, Mail, Smartphone, User, Shield, Lock } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function AdminProfilePage() {
   const { toast } = useToast();
   const { user: authUser, loading: authLoading } = useUser();
   const firestore = useFirestore();
   
-  const { data: staff, loading: staffLoading } = useDoc<UserDef>(authUser ? `users/${authUser.uid}` : '');
+  const staffPath = authUser?.uid ? `users/${authUser.uid}` : '';
+  const { data: staff, loading: staffLoading } = useDoc<UserDef>(staffPath);
 
   const [displayName, setDisplayName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -99,20 +101,37 @@ export default function AdminProfilePage() {
     }
   };
 
-  if (authLoading || (authUser && staffLoading)) {
+  if (authLoading || (authUser && !staffPath) || (staffPath && staffLoading)) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4 opacity-50">
-        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em]">Authorizing Staff Access...</p>
+      <div className="space-y-10">
+        <PageHeader title="AUTHORIZING STAFF ACCESS" description="Synchronizing staff identity..." />
+        <div className="grid gap-8 lg:grid-cols-3">
+           <Skeleton className="h-[400px] w-full bg-white/5" />
+           <Skeleton className="h-[400px] lg:col-span-2 w-full bg-white/5" />
+        </div>
       </div>
     );
+  }
+
+  if (!authUser) {
+     return (
+       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+         <div className="p-4 rounded-full bg-destructive/10 border border-destructive/20 text-destructive mb-4">
+           <Lock className="w-12 h-12" />
+         </div>
+         <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Staff Authorization Required</h1>
+         <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
+            <a href="/landing">Return to Portal</a>
+         </Button>
+       </div>
+     );
   }
 
   if (!staff) {
     return <PageHeader title="FILE NOT FOUND" description="Could not locate staff records." />
   }
 
-  const userInitial = displayName.charAt(0);
+  const userInitial = displayName ? displayName.charAt(0) : 'S';
 
   return (
     <div className="space-y-10">

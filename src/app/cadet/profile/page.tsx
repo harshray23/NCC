@@ -20,7 +20,8 @@ export default function CadetProfilePage() {
   const { user: authUser, loading: authLoading } = useUser();
   const firestore = useFirestore();
   
-  const { data: cadet, loading: cadetLoading } = useDoc<UserDef>(authUser ? `users/${authUser.uid}` : '');
+  const cadetPath = authUser?.uid ? `users/${authUser.uid}` : '';
+  const { data: cadet, loading: cadetLoading } = useDoc<UserDef>(cadetPath);
 
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
@@ -98,7 +99,9 @@ export default function CadetProfilePage() {
     }
   };
 
-  if (authLoading || (authUser && cadetLoading)) {
+  // If we are loading auth, or auth is done but we haven't even started loading the doc (path is empty)
+  // or the doc is currently loading.
+  if (authLoading || (authUser && !cadetPath) || (cadetPath && cadetLoading)) {
     return (
       <div className="space-y-10">
         <PageHeader title="AUTHORIZING ACCESS" description="Synchronizing with central command..." />
@@ -121,7 +124,7 @@ export default function CadetProfilePage() {
            Your current session is unauthorized. Please re-authenticate at the primary portal to view tactical dossiers.
          </p>
          <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
-            <a href="/login/cadet">Return to Portal</a>
+            <a href="/landing">Return to Portal</a>
          </Button>
        </div>
      );
@@ -135,7 +138,7 @@ export default function CadetProfilePage() {
          </div>
          <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Personnel File Missing</h1>
          <p className="max-w-xs text-xs uppercase tracking-widest text-muted-foreground leading-relaxed">
-           Your administrative identity exists, but your tactical dossier has not been initialized in the units central registry.
+           Your administrative identity exists, but your tactical dossier has not been initialized in the unit's central registry.
          </p>
        </div>
      );

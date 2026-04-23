@@ -13,9 +13,10 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, ShieldCheck, User } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
+import { cn } from '@/lib/utils'
 
 export default function LoginPage() {
   const params = useParams()
@@ -27,90 +28,123 @@ export default function LoginPage() {
     switch (role) {
       case 'admin':
         return {
-          title: 'Admin Login',
-          idLabel: 'Email Address',
-          idPlaceholder: 'admin@example.com',
+          title: 'Staff Login',
+          idLabel: 'Service Email',
+          idPlaceholder: 'admin@ncc.gov.in',
           idType: 'email',
-          dashboardPath: '/admin'
+          dashboardPath: '/admin',
+          icon: <ShieldCheck className="w-5 h-5 text-primary" />
         }
       case 'manager':
         return {
-          title: 'Manager Login',
-          idLabel: 'Email Address',
-          idPlaceholder: 'manager@example.com',
+          title: 'Strategic Access',
+          idLabel: 'Command Email',
+          idPlaceholder: 'manager@ncc.gov.in',
           idType: 'email',
-          dashboardPath: '/manager'
+          dashboardPath: '/manager',
+          icon: <ShieldCheck className="w-5 h-5 text-primary" />
         }
       default: // cadet
         return {
-          title: 'Welcome Back',
+          title: 'Cadet Sign In',
           idLabel: 'Regimental Number',
-          idPlaceholder: 'e.g. WB2024SDIA9160860',
+          idPlaceholder: 'WB21SDA123456',
           idType: 'text',
-          dashboardPath: '/cadet'
+          dashboardPath: '/cadet',
+          icon: <User className="w-5 h-5 text-primary" />
         }
     }
   }, [role])
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, you would handle authentication here
     router.push(roleConfig.dashboardPath);
   }
 
   return (
-    <Card className="w-full max-w-sm bg-background/80 backdrop-blur-sm">
+    <Card className="w-full max-w-sm border-white/5 bg-black/40 backdrop-blur-xl shadow-2xl shadow-black">
       <form onSubmit={handleLogin}>
-        <CardHeader className="text-center items-center">
-            <Image
-              src="/ncc.jpg"
-              width={80}
-              height={80}
-              alt="NCC Logo"
-              data-ai-hint="logo"
-            />
-            <CardTitle className="mt-4 text-2xl font-headline">{roleConfig.title}</CardTitle>
-            <CardDescription>Sign in to access your portal</CardDescription>
+        <CardHeader className="space-y-4 pb-8">
+          <div className="flex justify-center">
+            <div className="p-3 rounded-full bg-primary/10 border border-primary/20 shadow-[0_0_15px_rgba(132,189,0,0.2)]">
+               <Image
+                src="/ncc.jpg"
+                width={48}
+                height={48}
+                alt="NCC Logo"
+                data-ai-hint="logo"
+                className="opacity-90"
+              />
+            </div>
+          </div>
+          <div className="text-center space-y-1">
+            <CardTitle className="text-2xl font-black tracking-tighter text-white font-headline">SIGN IN</CardTitle>
+            <CardDescription className="text-xs uppercase tracking-widest text-muted-foreground flex items-center justify-center gap-2">
+              {roleConfig.icon}
+              {roleConfig.title}
+            </CardDescription>
+          </div>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="grid gap-6">
           <div className="grid gap-2">
-            <Label htmlFor="id-field">{roleConfig.idLabel}</Label>
-            <Input id="id-field" type={roleConfig.idType} placeholder={roleConfig.idPlaceholder} required />
+            <Label htmlFor="id-field" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{roleConfig.idLabel}</Label>
+            <Input 
+              id="id-field" 
+              type={roleConfig.idType} 
+              placeholder={roleConfig.idPlaceholder} 
+              required 
+              className="h-12 bg-white/5 border-white/10 focus:border-primary focus:ring-primary/20 text-white placeholder:text-muted-foreground/30 transition-all"
+            />
           </div>
           <div className="grid gap-2">
-            <div className="flex items-center">
-              <Label htmlFor="password">Password</Label>
-              <Link href="/forgot-password" className="ml-auto inline-block text-sm text-primary/80 hover:text-primary hover:underline">
-                Forgot Password?
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Password</Label>
+              <Link href="/forgot-password" virtual-link="true" className="text-xs font-bold text-primary/70 hover:text-primary transition-colors tracking-tighter uppercase">
+                Reset
               </Link>
             </div>
             <div className="relative">
-              <Input id="password" type={showPassword ? "text" : "password"} required />
+              <Input 
+                id="password" 
+                type={showPassword ? "text" : "password"} 
+                required 
+                className="h-12 bg-white/5 border-white/10 focus:border-primary focus:ring-primary/20 text-white transition-all pr-12"
+              />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="absolute inset-y-0 right-0 h-full w-10 text-muted-foreground"
+                className="absolute inset-y-0 right-0 h-full w-12 text-muted-foreground hover:bg-transparent hover:text-white transition-colors"
                 onClick={() => setShowPassword((prev) => !prev)}
               >
-                {showPassword ? <EyeOff /> : <Eye />}
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 <span className="sr-only">Toggle password visibility</span>
               </Button>
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <Button type="submit" className="w-full">Sign In</Button>
-          {role === 'cadet' && (
-             <p className="text-xs text-muted-foreground">
-                Don&apos;t have an account? Contact your administrator.
-            </p>
-          )}
-          <Button variant="link" size="sm" asChild className="text-muted-foreground">
-            <Link href="/landing"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Portal Selection</Link>
+        <CardFooter className="flex flex-col gap-6 pt-2">
+          <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-[0.2em] bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
+            Authenticate
           </Button>
+          
+          <div className="w-full flex flex-col items-center gap-4">
+             {role === 'cadet' && (
+                <p className="text-[10px] text-center text-muted-foreground uppercase tracking-widest leading-relaxed">
+                  Account issues? Contact unit <br/> HQ administrative staff.
+                </p>
+              )}
+              <Button variant="link" size="sm" asChild className="text-muted-foreground hover:text-white transition-colors">
+                <Link href="/landing" className="flex items-center gap-2 text-[10px] uppercase tracking-widest">
+                  <ArrowLeft className="w-3 h-3" /> 
+                  Switch Portal
+                </Link>
+              </Button>
+          </div>
         </CardFooter>
       </form>
+      {/* Visual Accent */}
+      <div className="h-1 w-full bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
     </Card>
   )
 }

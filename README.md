@@ -1,4 +1,4 @@
-NCC Management System
+it NCC Management System
 
 A modern web-based system for managing NCC cadets, camps, training programs, and daily practice activities.
 

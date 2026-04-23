@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -11,7 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useDoc } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/download"
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import type { User as UserDef } from "@/lib/definitions"
 import { Shield, User, Smartphone, Mail, Hash, Calendar, Layers, Lock } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"

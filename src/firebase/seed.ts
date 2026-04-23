@@ -1,27 +1,10 @@
 
-import * as admin from 'firebase-admin';
 import { firestore } from 'firebase-admin';
+import { auth, db } from './admin';
+import dotenv from 'dotenv';
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const serviceAccount = require('../../serviceAccountKey.json');
-
-// Initialize Firebase Admin SDK
-try {
-  if (admin.apps.length === 0) {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      projectId: serviceAccount.project_id,
-    });
-  }
-} catch (error: any) {
-    if (error.code !== 'app/duplicate-app') {
-        console.error('Firebase Admin SDK initialization error:', error);
-        process.exit(1);
-    }
-}
-
-const auth = admin.auth();
-const db = admin.firestore();
+// Load environment variables from .env file
+dotenv.config();
 
 const seedDatabase = async () => {
   console.log('Starting database seed...');
@@ -93,7 +76,10 @@ const seedDatabase = async () => {
   }
 
   console.log('Database seed finished.');
-  setTimeout(() => process.exit(0), 1000);
+  process.exit(0);
 };
 
-seedDatabase();
+seedDatabase().catch((err) => {
+  console.error('Seed script failed:', err);
+  process.exit(1);
+});

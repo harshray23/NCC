@@ -1,4 +1,3 @@
-
 "use client"
 import * as React from "react"
 import { useForm } from "react-hook-form"
@@ -29,9 +28,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { MoreHorizontal, PlusCircle } from "lucide-react"
+import { MoreHorizontal, PlusCircle, Search, UserPlus } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EditCadetDialog } from "@/components/edit-cadet-dialog"
@@ -41,17 +39,15 @@ import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription
 } from "@/components/ui/form";
 import { CreateCadetInput, CreateCadetInputSchema, createCadet } from "@/ai/flows/create-cadet-flow"
 import { useToast } from "@/hooks/use-toast"
 import { query, where, orderBy } from "firebase/firestore"
-
-const AddCadetFormSchema = CreateCadetInputSchema;
 
 export default function ManageCadetsPage() {
   const { data: cadets, loading } = useCollection<Cadet>("users", {
@@ -63,7 +59,7 @@ export default function ManageCadetsPage() {
   const [editingCadet, setEditingCadet] = React.useState<Cadet | null>(null);
 
   const form = useForm<CreateCadetInput>({
-    resolver: zodResolver(AddCadetFormSchema),
+    resolver: zodResolver(CreateCadetInputSchema),
     defaultValues: {
       displayName: "",
       regimentalNumber: "",
@@ -75,54 +71,60 @@ export default function ManageCadetsPage() {
 
   async function onSubmit(data: CreateCadetInput) {
     try {
-      toast({ title: "Creating Cadet...", description: "Please wait." });
+      toast({ title: "INITIATING ENROLLMENT", description: "Securing record..." });
       await createCadet(data);
       toast({
-        title: "Success!",
-        description: `Cadet ${data.displayName} has been created.`,
+        title: "ENROLLMENT COMPLETE",
+        description: `Cadet ${data.displayName} active in database.`,
       });
       form.reset();
       setIsAddDialogOpen(false);
     } catch (error: any) {
-      console.error("Failed to create cadet:", error);
       toast({
         variant: "destructive",
-        title: "Creation Failed",
-        description: error.message || "An unexpected error occurred.",
+        title: "ENROLLMENT FAILED",
+        description: error.message || "Unknown protocol error.",
       });
     }
   }
 
   return (
-    <>
+    <div className="space-y-8">
       <PageHeader
-        title="Manage Cadets"
-        description="Add, edit, or remove cadet profiles from the unit."
+        title="PERSONNEL ROSTER"
+        description="Operational oversight of all unit active-duty cadets."
       >
+        <div className="relative w-64 mr-2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50" />
+          <Input 
+            placeholder="SEARCH REGIMENTAL NO..." 
+            className="pl-9 h-9 bg-white/5 border-white/10 text-[10px] font-bold tracking-widest uppercase focus:border-primary/50"
+          />
+        </div>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" className="gap-1">
-              <PlusCircle className="h-4 w-4" />
-              Add Cadet
+            <Button size="sm" className="h-9 gap-2 font-black uppercase tracking-widest text-[10px] bg-primary hover:bg-primary/90">
+              <UserPlus className="h-4 w-4" />
+              Enroll Cadet
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="bg-black/90 border-white/10 backdrop-blur-xl sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Add New Cadet</DialogTitle>
-              <DialogDescription>
-                Fill in the details to enroll a new cadet. The initial password should be shared with them securely.
+              <DialogTitle className="font-headline tracking-tighter uppercase">NEW PERSONNEL ENTRY</DialogTitle>
+              <DialogDescription className="text-xs uppercase tracking-widest">
+                Execute secure enrollment of a new unit member.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4 py-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <FormField
                   control={form.control}
                   name="displayName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Legal Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Aarav Sharma" {...field} />
+                        <Input placeholder="FULL NAME" className="bg-white/5 border-white/10 h-11" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -133,9 +135,9 @@ export default function ManageCadetsPage() {
                   name="regimentalNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Regimental Number</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Service Identification</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. WB21SDA123456" {...field} />
+                        <Input placeholder="WB21SDA123456" className="bg-white/5 border-white/10 h-11" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -146,11 +148,10 @@ export default function ManageCadetsPage() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Initial Password</FormLabel>
+                      <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Access Credential</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input type="password" placeholder="MIN 6 CHARACTERS" className="bg-white/5 border-white/10 h-11" {...field} />
                       </FormControl>
-                       <FormDescription>Min 6 characters.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -161,20 +162,19 @@ export default function ManageCadetsPage() {
                     name="year"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Year</FormLabel>
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Academic Cycle</FormLabel>
                         <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={String(field.value)}>
                           <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select year" />
+                            <SelectTrigger className="bg-white/5 border-white/10 h-11">
+                              <SelectValue placeholder="YEAR" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
-                            <SelectItem value="1">1st Year</SelectItem>
-                            <SelectItem value="2">2nd Year</SelectItem>
-                            <SelectItem value="3">3rd Year</SelectItem>
+                          <SelectContent className="bg-black/90 border-white/10">
+                            <SelectItem value="1">1ST YEAR</SelectItem>
+                            <SelectItem value="2">2ND YEAR</SelectItem>
+                            <SelectItem value="3">3RD YEAR</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
@@ -183,31 +183,28 @@ export default function ManageCadetsPage() {
                     name="dept"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Dept.</FormLabel>
+                        <FormLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Branch/Unit</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                            <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select dept" />
+                            <SelectTrigger className="bg-white/5 border-white/10 h-11">
+                              <SelectValue placeholder="DEPT" />
                             </SelectTrigger>
                            </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-black/90 border-white/10">
                             <SelectItem value="CSE">CSE</SelectItem>
                             <SelectItem value="ECE">ECE</SelectItem>
                             <SelectItem value="ME">ME</SelectItem>
                             <SelectItem value="IT">IT</SelectItem>
-                            <SelectItem value="EE">EE</SelectItem>
-                            <SelectItem value="AEIE">AEIE</SelectItem>
                           </SelectContent>
                         </Select>
-                        <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                 <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit" disabled={form.formState.isSubmitting}>
-                    {form.formState.isSubmitting ? "Adding..." : "Add Cadet"}
+                 <DialogFooter className="pt-6">
+                  <Button type="button" variant="outline" className="border-white/10 hover:bg-white/5" onClick={() => setIsAddDialogOpen(false)}>CANCEL</Button>
+                  <Button type="submit" className="bg-primary hover:bg-primary/90 font-black tracking-[0.2em]" disabled={form.formState.isSubmitting}>
+                    {form.formState.isSubmitting ? "AUTHORIZING..." : "EXECUTE ENROLLMENT"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -224,64 +221,59 @@ export default function ManageCadetsPage() {
         />
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Cadet Roster</CardTitle>
-          <CardDescription>
-            A list of all cadets currently enrolled in the unit.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Card className="border-white/5 bg-black/40 backdrop-blur-md">
+        <CardContent className="p-0">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Regimental No.</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Rank</TableHead>
-                <TableHead>Year</TableHead>
-                <TableHead>Dept.</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
+            <TableHeader className="bg-white/5">
+              <TableRow className="border-white/5 hover:bg-transparent">
+                <TableHead className="text-[10px] font-black uppercase tracking-widest py-5">Personnel ID</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest py-5">Designation</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest py-5">Rank</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest py-5">Service Cycle</TableHead>
+                <TableHead className="text-[10px] font-black uppercase tracking-widest py-5">Branch</TableHead>
+                <TableHead className="text-right py-5 pr-6"><span className="sr-only">Actions</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading && Array.from({ length: 5 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell><Skeleton className="h-4 w-[150px]" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[120px]" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-[50px] rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-6 w-[70px] rounded-full" /></TableCell>
-                  <TableCell><Skeleton className="h-4 w-[40px]" /></TableCell>
-                  <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                <TableRow key={i} className="border-white/5">
+                  <TableCell><Skeleton className="h-4 w-[150px] bg-white/5" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[120px] bg-white/5" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-[50px] rounded-full bg-white/5" /></TableCell>
+                  <TableCell><Skeleton className="h-6 w-[70px] rounded-full bg-white/5" /></TableCell>
+                  <TableCell><Skeleton className="h-4 w-[40px] bg-white/5" /></TableCell>
+                  <TableCell className="text-right pr-6"><Skeleton className="h-8 w-8 bg-white/5 ml-auto" /></TableCell>
                 </TableRow>
               ))}
               {!loading && cadets?.map((cadet) => (
-                <TableRow key={cadet.id}>
-                  <TableCell className="font-medium">{cadet.regimentalNumber}</TableCell>
-                  <TableCell>{cadet.displayName}</TableCell>
+                <TableRow key={cadet.id} className="border-white/5 hover:bg-white/5 transition-colors group">
+                  <TableCell className="font-mono text-xs text-primary/80 py-6">{cadet.regimentalNumber}</TableCell>
+                  <TableCell className="text-sm font-bold text-white uppercase tracking-tight">{cadet.displayName}</TableCell>
                   <TableCell>
-                    <Badge variant="secondary">{cadet.rank || 'CDT'}</Badge>
+                    <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest border-primary/20 bg-primary/5 text-primary">
+                      {cadet.rank || 'CDT'}
+                    </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline">{cadet.year} Year</Badge>
+                    <Badge variant="outline" className="text-[9px] uppercase tracking-widest border-white/10 text-muted-foreground/60">
+                      Phase {cadet.year}
+                    </Badge>
                   </TableCell>
-                  <TableCell>{cadet.dept}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-xs font-bold text-white/40">{cadet.dept}</TableCell>
+                  <TableCell className="text-right pr-6">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 hover:bg-primary/20 hover:text-primary transition-all">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => setEditingCadet(cadet)}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>View Profile</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
-                          Delete
+                      <DropdownMenuContent align="end" className="bg-black/90 border-white/10 backdrop-blur-xl">
+                        <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Operations</DropdownMenuLabel>
+                        <DropdownMenuItem className="text-xs uppercase tracking-widest focus:bg-primary focus:text-primary-foreground" onClick={() => setEditingCadet(cadet)}>Modify File</DropdownMenuItem>
+                        <DropdownMenuItem className="text-xs uppercase tracking-widest focus:bg-primary focus:text-primary-foreground">Full Dossier</DropdownMenuItem>
+                        <DropdownMenuSeparator className="bg-white/5" />
+                        <DropdownMenuItem className="text-xs uppercase tracking-widest text-destructive focus:bg-destructive focus:text-white">
+                          Discharge
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -289,9 +281,13 @@ export default function ManageCadetsPage() {
                 </TableRow>
               ))}
                {!loading && cadets?.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="h-24 text-center">
-                    No cadets found. Add one to get started.
+                <TableRow className="border-none">
+                  <TableCell colSpan={6} className="h-64 text-center">
+                    <div className="flex flex-col items-center gap-2 opacity-30">
+                      <Users className="w-12 h-12 mb-2" />
+                      <p className="text-xs font-black uppercase tracking-[0.3em]">No personnel recorded</p>
+                      <p className="text-[10px] uppercase tracking-widest">Execute enrollment to begin tracking</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
@@ -299,8 +295,6 @@ export default function ManageCadetsPage() {
           </Table>
         </CardContent>
       </Card>
-    </>
+    </div>
   )
 }
-
-    

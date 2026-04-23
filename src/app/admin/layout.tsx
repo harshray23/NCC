@@ -7,6 +7,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarInset,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
 import { LayoutDashboard, Users, Tent, CalendarCheck, ArrowUpRight, Settings, LogOut, User, CalendarPlus } from "lucide-react"
 import { Logo } from "@/components/logo"
@@ -20,95 +21,81 @@ export default function AdminLayout({
 }) {
   return (
     <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <Logo imageSrc="/emblem.jpg" />
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Dashboard">
-                <Link href="/admin">
-                  <LayoutDashboard />
-                  Dashboard
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Manage Cadets">
-                <Link href="/admin/cadets">
-                  <Users />
-                  Manage Cadets
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Manage Camps">
-                <Link href="/admin/camps">
-                  <Tent />
-                  Manage Camps
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Manage Events">
-                <Link href="/admin/events">
-                  <CalendarPlus />
-                  Manage Events
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Mark Attendance">
-                <Link href="/admin/attendance">
-                  <CalendarCheck />
-                  Mark Attendance
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Year Promotion">
-                <Link href="/admin/year-promotion">
-                  <ArrowUpRight />
-                  Year Promotion
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarHeader className="mt-auto">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Profile">
-                <Link href="/admin/profile">
-                  <User />
-                  Profile
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Settings">
-                <Link href="/admin/settings">
-                  <Settings />
-                  Settings
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Log Out">
-                <Link href="/landing">
-                  <LogOut />
-                  Log Out
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarHeader>
-      </Sidebar>
-      <SidebarInset>
-        <PortalHeader />
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
-      </SidebarInset>
+      <div className="flex min-h-screen w-full bg-[#0a0c0a] military-grid">
+        <Sidebar className="border-r border-white/5">
+          <SidebarHeader className="h-16 flex items-center px-6 border-b border-white/5">
+            <Logo imageSrc="/emblem.jpg" className="scale-125" />
+          </SidebarHeader>
+          <SidebarContent className="px-4 py-6">
+            <SidebarMenu className="gap-2">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Dashboard" className="h-11">
+                  <Link href="/admin">
+                    <LayoutDashboard className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Command Center</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Manage Cadets" className="h-11">
+                  <Link href="/admin/cadets">
+                    <Users className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Personnel Roster</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Manage Camps" className="h-11">
+                  <Link href="/admin/camps">
+                    <Tent className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Training Camps</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Manage Events" className="h-11">
+                  <Link href="/admin/events">
+                    <CalendarPlus className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Unit Events</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Mark Attendance" className="h-11">
+                  <Link href="/admin/attendance">
+                    <CalendarCheck className="w-5 h-5" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Attendance</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter className="p-4 border-t border-white/5">
+            <SidebarMenu className="gap-2">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Profile" className="h-11 opacity-70 hover:opacity-100">
+                  <Link href="/admin/profile">
+                    <User className="w-5 h-5" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Staff Profile</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild tooltip="Log Out" className="h-11 text-destructive hover:bg-destructive/10">
+                  <Link href="/landing">
+                    <LogOut className="w-5 h-5" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Terminate Session</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+        <SidebarInset className="bg-transparent">
+          <PortalHeader />
+          <main className="flex-1 p-6 sm:p-8 lg:p-10">{children}</main>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   )
 }

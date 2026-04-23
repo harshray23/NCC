@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useParams, useRouter } from 'next/navigation'
@@ -16,13 +17,21 @@ import { Label } from "@/components/ui/label"
 import { ArrowLeft, Eye, EyeOff, ShieldCheck, User } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { cn } from '@/lib/utils'
+import { useAuth } from '@/firebase'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { useToast } from '@/hooks/use-toast'
 
 export default function LoginPage() {
   const params = useParams()
   const router = useRouter()
+  const auth = useAuth()
+  const { toast } = useToast()
+  
   const role = Array.isArray(params.role) ? params.role[0] : 'cadet'
   const [showPassword, setShowPassword] = useState(false)
+  const [identifier, setIdentifier] = useState('')
+  const [password, setPassword] = useState('')
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
 
   const roleConfig = useMemo(() => {
     switch (role) {
@@ -56,9 +65,35 @@ export default function LoginPage() {
     }
   }, [role])
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push(roleConfig.dashboardPath);
+    if (!auth) return;
+
+    setIsAuthenticating(true);
+    
+    // For cadets, the email is derived from the regimental number
+    let loginEmail = identifier;
+    if (role === 'cadet') {
+      const cleanId = identifier.toLowerCase().replace(/[^a-z0-9]/g, '');
+      loginEmail = `${cleanId}@cadet.ncc.portal`;
+    }
+
+    try {
+      await signInWithEmailAndPassword(auth, loginEmail, password);
+      toast({
+        title: "AUTHENTICATION SUCCESSFUL",
+        description: "Secure session established. Redirecting to Command Center...",
+      });
+      router.push(roleConfig.dashboardPath);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "AUTHENTICATION FAILED",
+        description: error.message || "Invalid credentials or unauthorized access.",
+      });
+    } finally {
+      setIsAuthenticating(false);
+    }
   }
 
   return (
@@ -93,6 +128,8 @@ export default function LoginPage() {
               type={roleConfig.idType} 
               placeholder={roleConfig.idPlaceholder} 
               required 
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               className="h-12 bg-white/5 border-white/10 focus:border-primary focus:ring-primary/20 text-white placeholder:text-muted-foreground/30 transition-all"
             />
           </div>
@@ -108,6 +145,8 @@ export default function LoginPage() {
                 id="password" 
                 type={showPassword ? "text" : "password"} 
                 required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 className="h-12 bg-white/5 border-white/10 focus:border-primary focus:ring-primary/20 text-white transition-all pr-12"
               />
               <Button
@@ -124,8 +163,12 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-6 pt-2">
-          <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-[0.2em] bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform">
-            Authenticate
+          <Button 
+            type="submit" 
+            disabled={isAuthenticating}
+            className="w-full h-12 text-sm font-black uppercase tracking-[0.2em] bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 active:scale-[0.98] transition-transform"
+          >
+            {isAuthenticating ? "AUTHORIZING..." : "Authenticate"}
           </Button>
           
           <div className="w-full flex flex-col items-center gap-4">

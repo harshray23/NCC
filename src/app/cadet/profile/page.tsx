@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -10,9 +11,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useDoc } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/download"
 import type { User as UserDef } from "@/lib/definitions"
-import { Shield, User, Smartphone, Mail, Hash, Calendar, Layers } from "lucide-react"
+import { Shield, User, Smartphone, Mail, Hash, Calendar, Layers, Lock } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function CadetProfilePage() {
   const { toast } = useToast();
@@ -40,7 +42,7 @@ export default function CadetProfilePage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit for profiles
+      if (file.size > 5 * 1024 * 1024) {
         toast({
           variant: "destructive",
           title: "ENCRYPTION LIMIT EXCEEDED",
@@ -99,27 +101,48 @@ export default function CadetProfilePage() {
 
   if (authLoading || (authUser && cadetLoading)) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4 opacity-50">
-        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.3em]">Decrypting Personnel File...</p>
+      <div className="space-y-10">
+        <PageHeader title="AUTHORIZING ACCESS" description="Synchronizing with central command..." />
+        <div className="grid gap-8 lg:grid-cols-3">
+           <Skeleton className="h-[400px] w-full bg-white/5" />
+           <Skeleton className="h-[400px] lg:col-span-2 w-full bg-white/5" />
+        </div>
       </div>
     );
   }
 
   if (!authUser) {
-     return <PageHeader title="ACCESS DENIED" description="Secure session required to view dossier." />
+     return (
+       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+         <div className="p-4 rounded-full bg-destructive/10 border border-destructive/20 text-destructive mb-4">
+           <Lock className="w-12 h-12" />
+         </div>
+         <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Secure Access Required</h1>
+         <p className="max-w-xs text-xs uppercase tracking-widest text-muted-foreground leading-relaxed">
+           Your current session is unauthorized. Please re-authenticate at the primary portal to view tactical dossiers.
+         </p>
+         <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
+            <a href="/login/cadet">Return to Portal</a>
+         </Button>
+       </div>
+     );
   }
 
   if (!cadet) {
      return (
-       <PageHeader 
-        title="FILE NOT FOUND" 
-        description="The tactical dossier for this personnel could not be located in the central database." 
-       />
+       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+         <div className="p-4 rounded-full bg-primary/10 border border-primary/20 text-primary mb-4">
+           <Shield className="w-12 h-12" />
+         </div>
+         <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Personnel File Missing</h1>
+         <p className="max-w-xs text-xs uppercase tracking-widest text-muted-foreground leading-relaxed">
+           Your administrative identity exists, but your tactical dossier has not been initialized in the units central registry.
+         </p>
+       </div>
      );
   }
 
-  const cadetInitial = cadet.displayName.charAt(0);
+  const cadetInitial = cadet.displayName ? cadet.displayName.charAt(0) : 'C';
 
   return (
     <div className="space-y-10">
@@ -136,7 +159,7 @@ export default function CadetProfilePage() {
       <div className="grid gap-8 lg:grid-cols-3">
         <Card className="lg:col-span-1 border-white/5 bg-black/40 backdrop-blur-md flex flex-col items-center p-8">
           <div className="relative group">
-            <Avatar className="h-40 w-40 border-2 border-white/5 group-hover:border-primary/50 transition-all duration-500">
+            <Avatar className="h-40 w-40 border-2 border-white/5 group-hover:border-primary/50 transition-all duration-500 shadow-2xl">
               <AvatarImage src={avatarUrl} alt={cadet.displayName} className="object-cover" />
               <AvatarFallback className="text-4xl font-black bg-white/5">{cadetInitial}</AvatarFallback>
             </Avatar>

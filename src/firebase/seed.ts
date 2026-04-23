@@ -7,7 +7,18 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const seedDatabase = async () => {
-  console.log('Starting database seed...');
+  console.log('--- COMMAND PORTAL DATABASE SEED INITIALIZED ---');
+  
+  // Verify Env Vars
+  const requiredVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'];
+  const missing = requiredVars.filter(v => !process.env[v]);
+  
+  if (missing.length > 0) {
+    console.error('CRITICAL ERROR: Missing environment variables:', missing.join(', '));
+    console.error('Ensure your .env file is correctly configured.');
+    process.exit(1);
+  }
+
   const serverTimestamp = firestore.FieldValue.serverTimestamp();
 
   const usersToSeed = [
@@ -36,16 +47,28 @@ const seedDatabase = async () => {
 
   for (const userData of usersToSeed) {
     try {
-      // 1. Create user in Firebase Authentication
-      const userRecord = await auth.createUser({
-        email: userData.email,
-        password: userData.password,
-        displayName: userData.displayName,
-      });
-      console.log(`Successfully created auth user: ${userData.email}`);
+      console.log(`\nPROVISIONING ACCESS: ${userData.email}...`);
+      
+      let userRecord;
+      try {
+        userRecord = await auth.getUserByEmail(userData.email);
+        console.log(`- IDENTITY VERIFIED: User already exists.`);
+      } catch (e: any) {
+        if (e.code === 'auth/user-not-found') {
+          userRecord = await auth.createUser({
+            email: userData.email,
+            password: userData.password,
+            displayName: userData.displayName,
+          });
+          console.log(`- AUTH RECORD CREATED: Success.`);
+        } else {
+          throw e;
+        }
+      }
 
       // 2. Set custom claim for role-based access control
       await auth.setCustomUserClaims(userRecord.uid, { role: userData.role });
+      console.log(`- SECURITY CLAIMS ASSIGNED: role=${userData.role}`);
 
       // 3. Create a corresponding user document in Firestore
       const userDoc: { [key: string]: any; } = {
@@ -63,23 +86,19 @@ const seedDatabase = async () => {
         userDoc.dept = userData.dept;
       }
       
-      await db.collection('users').doc(userRecord.uid).set(userDoc);
-      console.log(`Created firestore document for: ${userData.email}`);
+      await db.collection('users').doc(userRecord.uid).set(userDoc, { merge: true });
+      console.log(`- FIRESTORE DOSSIER INITIALIZED: Success.`);
 
     } catch (error: any) {
-      if (error.code === 'auth/email-already-exists') {
-        console.log(`User with email ${userData.email} already exists. Skipping.`);
-      } else {
-        console.error(`Error creating user ${userData.email}:`, error.message);
-      }
+      console.error(`\nPROTOCOL FAILURE for ${userData.email}:`, error.message);
     }
   }
 
-  console.log('Database seed finished.');
+  console.log('\n--- DATABASE SEED PROTOCOL COMPLETE ---');
   process.exit(0);
 };
 
 seedDatabase().catch((err) => {
-  console.error('Seed script failed:', err);
+  console.error('\nCRITICAL SEED SCRIPT FAILURE:', err);
   process.exit(1);
 });

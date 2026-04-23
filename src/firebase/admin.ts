@@ -3,23 +3,36 @@ import * as admin from 'firebase-admin';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 
 if (getApps().length === 0) {
-  // This is the recommended secure way to initialize the Admin SDK.
-  // It uses environment variables, which are set in your hosting environment.
-  // This prevents your private key from being checked into source control.
-  const credential = cert({
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    // When storing the private key in an environment variable, newlines
-    // must be escaped. The 'replace' function un-escapes them.
-    privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-  });
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-  initializeApp({
-    credential,
-  });
+  if (privateKey) {
+    // Handle potential double-escaped newlines and multi-line strings
+    privateKey = privateKey.replace(/\\n/g, '\n');
+    // If it's wrapped in extra quotes from .env, strip them
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+      privateKey = privateKey.substring(1, privateKey.length - 1);
+    }
+  }
+
+  if (projectId && clientEmail && privateKey) {
+    const credential = cert({
+      projectId,
+      clientEmail,
+      privateKey,
+    });
+
+    initializeApp({
+      credential,
+    });
+  } else {
+    // Only log error in server context where it's needed
+    if (typeof window === 'undefined') {
+        console.warn('Firebase Admin: Missing environment variables. Administrative operations will fail.');
+    }
+  }
 }
 
-// Export the initialized admin services.
-// These can be imported and used in any server-side code.
 export const auth = admin.auth();
 export const db = admin.firestore();

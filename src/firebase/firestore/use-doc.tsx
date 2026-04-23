@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect, useMemo } from 'react';
-import { doc, onSnapshot, DocumentData } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { useFirestore } from '../provider';
 import { errorEmitter } from '../error-emitter';
 import { FirestorePermissionError } from '../errors';
@@ -23,6 +23,7 @@ export function useDoc<T>(path: string) {
       return;
     }
 
+    setLoading(true);
     const unsubscribe = onSnapshot(
       ref,
       (snapshot) => {

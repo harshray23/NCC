@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -7,20 +6,19 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { mockCadets } from "@/lib/placeholder-data"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useFirestore, useDoc } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import type { User as UserDef } from "@/lib/definitions"
+import { Shield, User, Smartphone, Mail, Hash, Calendar, Layers } from "lucide-react"
 
 export default function CadetProfilePage() {
   const { toast } = useToast();
   const { user: authUser, loading: authLoading } = useUser();
   const firestore = useFirestore();
   
-  // Fetch the cadet's data from Firestore only when authUser is available
   const { data: cadet, loading: cadetLoading } = useDoc<UserDef>(authUser ? `users/${authUser.uid}` : '');
 
   const [email, setEmail] = React.useState("");
@@ -42,11 +40,11 @@ export default function CadetProfilePage() {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 100 * 1024 * 1024) { // 100MB limit
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit for profiles
         toast({
           variant: "destructive",
-          title: "File too large",
-          description: "Please select a file smaller than 100MB.",
+          title: "ENCRYPTION LIMIT EXCEEDED",
+          description: "File size must be under 5MB for secure transmission.",
         });
         return;
       }
@@ -58,7 +56,7 @@ export default function CadetProfilePage() {
 
   const handleSaveChanges = async () => {
     if (!authUser || !firestore) {
-      toast({ variant: "destructive", title: "Error", description: "You must be logged in to save changes." });
+      toast({ variant: "destructive", title: "AUTH ERROR", description: "Identity verification failed." });
       return;
     }
     setIsSaving(true);
@@ -69,7 +67,7 @@ export default function CadetProfilePage() {
         const storage = getStorage();
         const storageRef = ref(storage, `profile-photos/${authUser.uid}`);
         
-        toast({ title: "Uploading photo...", description: "Please wait." });
+        toast({ title: "UPLOADING INTEL", description: "Securing image data..." });
         const snapshot = await uploadBytes(storageRef, selectedFile);
         newAvatarUrl = await getDownloadURL(snapshot.ref);
         setAvatarUrl(newAvatarUrl);
@@ -80,18 +78,18 @@ export default function CadetProfilePage() {
         email: email,
         phone: phone,
         avatarUrl: newAvatarUrl,
+        updatedAt: new Date().toISOString()
       });
 
       toast({
-        title: "Profile Updated",
-        description: "Your changes have been saved successfully.",
+        title: "DOSSIER UPDATED",
+        description: "Personnel records have been securely modified.",
       });
     } catch (error: any) {
-      console.error("Error saving profile:", error);
       toast({
         variant: "destructive",
-        title: "Uh oh! Something went wrong.",
-        description: error.message || "Could not save your profile.",
+        title: "PROTOCOL FAILURE",
+        description: error.message || "Could not synchronize changes.",
       });
     } finally {
       setIsSaving(false);
@@ -99,78 +97,156 @@ export default function CadetProfilePage() {
     }
   };
 
-  if (authLoading || cadetLoading) {
-    return <PageHeader title="Loading Profile..." />
+  if (authLoading || (authUser && cadetLoading)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4 opacity-50">
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="text-[10px] font-black uppercase tracking-[0.3em]">Decrypting Personnel File...</p>
+      </div>
+    );
+  }
+
+  if (!authUser) {
+     return <PageHeader title="ACCESS DENIED" description="Secure session required to view dossier." />
   }
 
   if (!cadet) {
-     return <PageHeader title="Profile Not Found" />
+     return (
+       <PageHeader 
+        title="FILE NOT FOUND" 
+        description="The tactical dossier for this personnel could not be located in the central database." 
+       />
+     );
   }
 
   const cadetInitial = cadet.displayName.charAt(0);
 
   return (
-    <>
+    <div className="space-y-10">
       <PageHeader
-        title="My Profile"
-        description="View and manage your personal information."
-      />
-      <Card>
-        <CardHeader>
-          <CardTitle>{cadet.displayName}</CardTitle>
-          <CardDescription>Keep your contact details up to date.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-8 md:grid-cols-3">
-             <div className="md:col-span-1 flex flex-col items-center gap-4">
-              <Avatar className="h-32 w-32">
-                <AvatarImage src={avatarUrl} alt={cadet.displayName} data-ai-hint="person portrait" />
-                <AvatarFallback>{cadetInitial}</AvatarFallback>
-              </Avatar>
-              <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                Change Photo
-              </Button>
-               <p className="text-xs text-muted-foreground text-center">
-                Photo must be in NCC uniform without a beret and with a white background.
-              </p>
-              {selectedFile && <p className="text-sm text-muted-foreground truncate">Selected: {selectedFile.name}</p>}
-              <Input id="picture" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
-            </div>
+        title="PERSONNEL DOSSIER"
+        description="Secure record management for active-duty personnel."
+      >
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded bg-primary/10 border border-primary/20">
+          <Shield className="w-4 h-4 text-primary" />
+          <span className="text-[10px] font-black text-primary tracking-widest uppercase">Verified Cadet</span>
+        </div>
+      </PageHeader>
 
-            <div className="md:col-span-2 grid grid-cols-2 gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="regimentalNumber">Regimental Number</Label>
-                <Input id="regimentalNumber" value={cadet.regimentalNumber || ''} readOnly disabled />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="rank">Rank</Label>
-                <Input id="rank" value={'CDT'} readOnly disabled />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="year">Year</Label>
-                <Input id="year" value={`${cadet.year} Year`} readOnly disabled />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="dept">Dept.</Label>
-                <Input id="dept" value={''} readOnly disabled />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />
-              </div>
-              <div className="col-span-2 flex justify-end">
-                <Button onClick={handleSaveChanges} disabled={isSaving}>
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </Button>
-              </div>
+      <div className="grid gap-8 lg:grid-cols-3">
+        <Card className="lg:col-span-1 border-white/5 bg-black/40 backdrop-blur-md flex flex-col items-center p-8">
+          <div className="relative group">
+            <Avatar className="h-40 w-40 border-2 border-white/5 group-hover:border-primary/50 transition-all duration-500">
+              <AvatarImage src={avatarUrl} alt={cadet.displayName} className="object-cover" />
+              <AvatarFallback className="text-4xl font-black bg-white/5">{cadetInitial}</AvatarFallback>
+            </Avatar>
+            <div className="absolute inset-0 rounded-full bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+               <User className="w-8 h-8 text-white" />
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </>
+          
+          <div className="mt-8 text-center space-y-2">
+            <h2 className="text-xl font-black tracking-tighter uppercase font-headline text-white">{cadet.displayName}</h2>
+            <p className="text-[10px] font-bold text-primary tracking-[0.3em] uppercase">Phase {cadet.year} • {cadet.dept || 'UNIT'}</p>
+          </div>
+
+          <Button 
+            type="button" 
+            variant="outline" 
+            className="mt-8 w-full border-white/10 hover:bg-white/5 text-[10px] font-black tracking-widest uppercase h-11" 
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Update Identification
+          </Button>
+          <p className="mt-4 text-[9px] text-muted-foreground/60 text-center uppercase leading-relaxed tracking-wider">
+            Standard NCC regulatory photo required:<br/>Full uniform, white background, no beret.
+          </p>
+          <Input id="picture" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
+        </Card>
+
+        <Card className="lg:col-span-2 border-white/5 bg-black/40 backdrop-blur-md">
+          <CardHeader className="border-b border-white/5 pb-6">
+            <CardTitle className="text-sm font-black tracking-widest uppercase font-headline">Service Specifications</CardTitle>
+            <CardDescription className="text-[10px] uppercase tracking-widest">Authorized data fields for personnel update.</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-8 space-y-8">
+            <div className="grid gap-8 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Hash className="w-3 h-3" /> Regimental ID
+                </Label>
+                <div className="h-11 px-3 flex items-center bg-white/5 border border-white/10 rounded font-mono text-xs text-white/40">
+                  {cadet.regimentalNumber}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Shield className="w-3 h-3" /> Operational Rank
+                </Label>
+                <div className="h-11 px-3 flex items-center bg-white/5 border border-white/10 rounded font-mono text-xs text-white/40">
+                  {cadet.rank || 'CDT'}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Calendar className="h-3 w-3" /> Service Phase
+                </Label>
+                <div className="h-11 px-3 flex items-center bg-white/5 border border-white/10 rounded font-mono text-xs text-white/40">
+                  Phase {cadet.year}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Layers className="h-3 w-3" /> Assigned Branch
+                </Label>
+                <div className="h-11 px-3 flex items-center bg-white/5 border border-white/10 rounded font-mono text-xs text-white/40">
+                  {cadet.dept}
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-white/5 w-full" />
+
+            <div className="grid gap-8 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Mail className="h-3 w-3" /> Secure Email
+                </Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Smartphone className="h-3 w-3" /> Comms Link
+                </Label>
+                <Input 
+                  id="phone" 
+                  type="tel" 
+                  value={phone} 
+                  placeholder="+91 XXXXX XXXXX"
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <Button 
+                onClick={handleSaveChanges} 
+                disabled={isSaving}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-black tracking-[0.2em] uppercase px-8 h-12 shadow-lg shadow-primary/20"
+              >
+                {isSaving ? 'AUTHORIZING...' : 'SYNCHRONIZE DOSSIER'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   )
 }

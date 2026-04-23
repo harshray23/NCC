@@ -4,9 +4,7 @@ import {
   collection,
   onSnapshot,
   Query,
-  DocumentData,
   query,
-  where,
   collectionGroup,
 } from 'firebase/firestore';
 import { useFirestore } from '../provider';
@@ -29,16 +27,25 @@ export function useCollection<T>(
   const [error, setError] = useState<Error | null>(null);
 
   const ref = useMemo(
-    () =>
-      isCollectionGroup
+    () => {
+      if (!firestore || !path) return null;
+      return isCollectionGroup
         ? collectionGroup(firestore, path)
-        : collection(firestore, path),
+        : collection(firestore, path);
+    },
     [firestore, path, isCollectionGroup],
   );
 
-  const finalQuery = useMemo(() => (q ? q(ref) : ref), [q, ref]);
+  const finalQuery = useMemo(() => (q && ref ? q(ref) : ref), [q, ref]);
 
   useEffect(() => {
+    if (!finalQuery) {
+      setLoading(false);
+      setData(null);
+      return;
+    }
+
+    setLoading(true);
     const unsubscribe = onSnapshot(
       finalQuery,
       (snapshot) => {

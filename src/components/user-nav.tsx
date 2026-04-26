@@ -28,6 +28,7 @@ export function UserNav() {
   
   const displayName = profile?.displayName || "Authorized User";
   const userEmail = profile?.email || authUser?.email || "secure@ncc.gov.in";
+  // The avatarUrl from Firestore already contains our cache-busting timestamp
   const avatarUrl = profile?.avatarUrl;
   const userInitial = displayName.charAt(0).toUpperCase();
 

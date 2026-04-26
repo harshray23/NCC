@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -90,7 +91,9 @@ export default function CadetProfilePage() {
               reject(error);
             },
             async () => {
-              finalAvatarUrl = await getDownloadURL(uploadTask.snapshot.ref);
+              const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+              // Append a timestamp to the URL to bust browser cache
+              finalAvatarUrl = `${downloadUrl}&t=${Date.now()}`;
               resolve(finalAvatarUrl);
             }
           );

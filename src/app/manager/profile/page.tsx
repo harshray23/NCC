@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -28,14 +29,14 @@ export default function ManagerProfilePage() {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>("");
+  const [avatarUrl, setAvatarUrl] = React.useState<string>("");
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
      if(manager) {
         setDisplayName(manager.displayName || "");
         setEmail(manager.email || "");
-        setAvatarUrl(manager.avatarUrl);
+        setAvatarUrl(manager.avatarUrl || "");
      }
   }, [manager]);
 
@@ -71,14 +72,13 @@ export default function ManagerProfilePage() {
         toast({ title: "UPLOADING IDENT", description: "Securing file..." });
         const snapshot = await uploadBytes(storageRef, selectedFile);
         newAvatarUrl = await getDownloadURL(snapshot.ref);
-        setAvatarUrl(newAvatarUrl);
       }
 
       const userDocRef = doc(firestore, "users", authUser.uid);
       await updateDoc(userDocRef, {
         displayName: displayName,
         email: email,
-        avatarUrl: newAvatarUrl,
+        avatarUrl: newAvatarUrl || "",
         updatedAt: new Date().toISOString()
       });
 

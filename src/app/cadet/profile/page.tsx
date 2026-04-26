@@ -30,7 +30,7 @@ export default function CadetProfilePage() {
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>("");
+  const [avatarUrl, setAvatarUrl] = React.useState<string>("");
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -38,7 +38,7 @@ export default function CadetProfilePage() {
       setEmail(cadet.email || "");
       setPhone(cadet.phone || "");
       setDisplayName(cadet.displayName || "");
-      setAvatarUrl(cadet.avatarUrl);
+      setAvatarUrl(cadet.avatarUrl || "");
     }
   }, [cadet]);
 
@@ -82,7 +82,7 @@ export default function CadetProfilePage() {
         displayName: displayName,
         email: email,
         phone: phone,
-        avatarUrl: finalAvatarUrl,
+        avatarUrl: finalAvatarUrl || "",
         updatedAt: new Date().toISOString()
       });
 

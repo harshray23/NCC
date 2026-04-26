@@ -30,7 +30,7 @@ export default function AdminProfilePage() {
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = React.useState<string | undefined>("");
+  const [avatarUrl, setAvatarUrl] = React.useState<string>("");
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -38,7 +38,7 @@ export default function AdminProfilePage() {
         setDisplayName(staff.displayName || "");
         setEmail(staff.email || "");
         setPhone(staff.phone || "");
-        setAvatarUrl(staff.avatarUrl);
+        setAvatarUrl(staff.avatarUrl || "");
      }
   }, [staff]);
 
@@ -74,7 +74,6 @@ export default function AdminProfilePage() {
         toast({ title: "UPLOADING IDENT", description: "Securing file..." });
         const snapshot = await uploadBytes(storageRef, selectedFile);
         newAvatarUrl = await getDownloadURL(snapshot.ref);
-        setAvatarUrl(newAvatarUrl);
       }
 
       const userDocRef = doc(firestore, "users", authUser.uid);
@@ -82,7 +81,7 @@ export default function AdminProfilePage() {
         displayName: displayName,
         email: email,
         phone: phone,
-        avatarUrl: newAvatarUrl,
+        avatarUrl: newAvatarUrl || "",
         updatedAt: new Date().toISOString()
       });
 

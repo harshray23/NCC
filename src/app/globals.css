@@ -1,9 +1,11 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
+    /* Default Dark Theme (Command Center) */
     --background: 120 10% 4%;
     --foreground: 60 9.1% 97.8%;
     --card: 120 10% 6%;
@@ -34,6 +36,38 @@
     --sidebar-border: 120 10% 8%;
     --sidebar-ring: 84 60% 55%;
   }
+
+  .light {
+    /* Light Theme (Operational Daylight) */
+    --background: 120 10% 98%;
+    --foreground: 120 10% 10%;
+    --card: 120 10% 96%;
+    --card-foreground: 120 10% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 120 10% 10%;
+    --primary: 84 60% 35%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 120 10% 90%;
+    --secondary-foreground: 120 10% 10%;
+    --muted: 120 5% 90%;
+    --muted-foreground: 120 5% 40%;
+    --accent: 84 60% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 120 10% 85%;
+    --input: 120 10% 85%;
+    --ring: 84 60% 35%;
+
+    --sidebar-background: 120 10% 95%;
+    --sidebar-foreground: 120 10% 20%;
+    --sidebar-primary: 84 60% 35%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 120 10% 85%;
+    --sidebar-accent-foreground: 84 60% 35%;
+    --sidebar-border: 120 10% 80%;
+    --sidebar-ring: 84 60% 35%;
+  }
 }
  
 @layer base {
@@ -55,5 +89,8 @@
   .military-grid {
     background-image: radial-gradient(circle, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 24px 24px;
+  }
+  .light .military-grid {
+    background-image: radial-gradient(circle, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   }
 }

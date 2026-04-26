@@ -5,12 +5,11 @@ import {
   ReactNode,
   useMemo,
   memo,
-  useState,
-  useEffect,
 } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Auth } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
+import { FirebaseStorage } from 'firebase/storage';
 import { initializeFirebase } from './';
 import { FirebaseClientProvider } from './client-provider';
 import { firebaseConfig } from './config';
@@ -19,6 +18,7 @@ interface FirebaseContextValue {
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
+  storage: FirebaseStorage;
 }
 
 const FirebaseContext = createContext<FirebaseContextValue | undefined>(
@@ -35,6 +35,7 @@ export const useFirebase = () => {
 export const useFirebaseApp = () => useFirebase().app;
 export const useFirestore = () => useFirebase().firestore;
 export const useAuth = () => useFirebase().auth;
+export const useStorage = () => useFirebase().storage;
 
 export const FirebaseProvider = memo(function FirebaseProvider({
   children,
@@ -49,8 +50,6 @@ export const FirebaseProvider = memo(function FirebaseProvider({
   }, []);
 
   if (!firebase) {
-    // This can happen if the config is not set.
-    // The initializeFirebase function will throw an error in this case.
     return <>{children}</>;
   }
 

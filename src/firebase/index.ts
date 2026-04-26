@@ -7,6 +7,7 @@ import {
 } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 import { firebaseConfig } from './config';
 import { FirebaseClientProvider } from './client-provider';
@@ -15,6 +16,7 @@ export function initializeFirebase(): {
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
+  storage: FirebaseStorage;
 } {
   if (!firebaseConfig) {
     throw new Error(
@@ -24,14 +26,12 @@ export function initializeFirebase(): {
   const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
   const auth = getAuth(app);
   const firestore = getFirestore(app);
-  return { app, auth, firestore };
+  const storage = getStorage(app);
+  return { app, auth, firestore, storage };
 }
 
 export { FirebaseClientProvider };
-export { useFirebase } from './provider';
-export { useFirebaseApp } from './provider';
-export { useFirestore } from './provider';
-export { useAuth } from './provider';
+export { useFirebase, useFirebaseApp, useFirestore, useAuth, useStorage } from './provider';
 export { useUser } from './auth/use-user';
 export { useCollection } from './firestore/use-collection';
 export { useDoc } from './firestore/use-doc';

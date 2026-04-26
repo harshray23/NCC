@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -9,17 +8,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { useUser, useFirestore, useDoc } from "@/firebase"
+import { useUser, useFirestore, useDoc, useStorage } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import type { User as UserDef } from "@/lib/definitions"
-import { Shield, User, Smartphone, Mail, Hash, Calendar, Lock } from "lucide-react"
+import { Shield, User, Smartphone, Mail, Hash, Calendar, Lock, Camera } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function CadetProfilePage() {
   const { toast } = useToast();
   const { user: authUser, loading: authLoading } = useUser();
   const firestore = useFirestore();
+  const storage = useStorage();
   
   const cadetPath = authUser?.uid ? `users/${authUser.uid}` : '';
   const { data: cadet, loading: cadetLoading } = useDoc<UserDef>(cadetPath);
@@ -27,10 +27,10 @@ export default function CadetProfilePage() {
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [displayName, setDisplayName] = React.useState("");
+  const [avatarUrl, setAvatarUrl] = React.useState<string>("");
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = React.useState<string>("");
   const [isSaving, setIsSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -38,9 +38,11 @@ export default function CadetProfilePage() {
       setEmail(cadet.email || "");
       setPhone(cadet.phone || "");
       setDisplayName(cadet.displayName || "");
-      setAvatarUrl(cadet.avatarUrl || "");
+      if (!selectedFile) {
+        setAvatarUrl(cadet.avatarUrl || "");
+      }
     }
-  }, [cadet]);
+  }, [cadet, selectedFile]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -60,18 +62,17 @@ export default function CadetProfilePage() {
   };
 
   const handleSaveChanges = async () => {
-    if (!authUser || !firestore) {
+    if (!authUser || !firestore || !storage) {
       toast({ variant: "destructive", title: "AUTH ERROR", description: "Identity verification failed." });
       return;
     }
     setIsSaving(true);
 
     try {
-      let finalAvatarUrl = avatarUrl;
+      let finalAvatarUrl = cadet?.avatarUrl || "";
+      
       if (selectedFile) {
-        const storage = getStorage();
         const storageRef = ref(storage, `profile-photos/${authUser.uid}`);
-        
         toast({ title: "UPLOADING INTEL", description: "Securing image data..." });
         const snapshot = await uploadBytes(storageRef, selectedFile);
         finalAvatarUrl = await getDownloadURL(snapshot.ref);
@@ -82,7 +83,7 @@ export default function CadetProfilePage() {
         displayName: displayName,
         email: email,
         phone: phone,
-        avatarUrl: finalAvatarUrl || "",
+        avatarUrl: finalAvatarUrl,
         updatedAt: new Date().toISOString()
       });
 
@@ -121,9 +122,6 @@ export default function CadetProfilePage() {
            <Lock className="w-12 h-12" />
          </div>
          <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Secure Access Required</h1>
-         <p className="max-w-xs text-xs uppercase tracking-widest text-muted-foreground leading-relaxed">
-           Your current session is unauthorized. Please re-authenticate at the primary portal to view tactical dossiers.
-         </p>
          <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
             <a href="/landing">Return to Portal</a>
          </Button>
@@ -138,9 +136,6 @@ export default function CadetProfilePage() {
            <Shield className="w-12 h-12" />
          </div>
          <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Personnel File Missing</h1>
-         <p className="max-w-xs text-xs uppercase tracking-widest text-muted-foreground leading-relaxed">
-           Your administrative identity exists, but your tactical dossier has not been initialized in the unit's central registry.
-         </p>
        </div>
      );
   }
@@ -167,7 +162,7 @@ export default function CadetProfilePage() {
               <AvatarFallback className="text-4xl font-black bg-white/5">{cadetInitial}</AvatarFallback>
             </Avatar>
             <div className="absolute inset-0 rounded-full bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-               <User className="w-8 h-8 text-white" />
+               <Camera className="w-8 h-8 text-white" />
             </div>
           </div>
           
@@ -184,16 +179,12 @@ export default function CadetProfilePage() {
           >
             Update Identification
           </Button>
-          <p className="mt-4 text-[9px] text-muted-foreground/60 text-center uppercase leading-relaxed tracking-wider">
-            Standard NCC regulatory photo required:<br/>Full uniform, white background, no beret.
-          </p>
           <Input id="picture" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
         </Card>
 
         <Card className="lg:col-span-2 border-white/5 bg-black/40 backdrop-blur-md">
           <CardHeader className="border-b border-white/5 pb-6">
             <CardTitle className="text-sm font-black tracking-widest uppercase font-headline">Service Specifications</CardTitle>
-            <CardDescription className="text-[10px] uppercase tracking-widest">Authorized data fields for personnel update.</CardDescription>
           </CardHeader>
           <CardContent className="pt-8 space-y-8">
             <div className="grid gap-8 md:grid-cols-2">
@@ -216,25 +207,7 @@ export default function CadetProfilePage() {
                   {cadet.regimentalNumber}
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
-                  <Shield className="w-3 h-3" /> Operational Rank
-                </Label>
-                <div className="h-11 px-3 flex items-center bg-white/5 border border-white/10 rounded font-mono text-xs text-white/40">
-                  {cadet.rank || 'CDT'}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
-                  <Calendar className="h-3 w-3" /> Service Phase
-                </Label>
-                <div className="h-11 px-3 flex items-center bg-white/5 border border-white/10 rounded font-mono text-xs text-white/40">
-                  Phase {cadet.year}
-                </div>
-              </div>
             </div>
-
-            <div className="h-px bg-white/5 w-full" />
 
             <div className="grid gap-8 md:grid-cols-2">
               <div className="space-y-2">
@@ -268,7 +241,7 @@ export default function CadetProfilePage() {
               <Button 
                 onClick={handleSaveChanges} 
                 disabled={isSaving}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-black tracking-[0.2em] uppercase px-8 h-12 shadow-lg shadow-primary/20"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-black tracking-[0.2em] uppercase px-8 h-12"
               >
                 {isSaving ? 'AUTHORIZING...' : 'SYNCHRONIZE DOSSIER'}
               </Button>

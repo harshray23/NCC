@@ -31,6 +31,10 @@
             "type": "number",
             "description": "The user's year of study (for cadets)."
         },
+        "avatarUrl": {
+          "type": "string",
+          "description": "The URL of the user's profile picture."
+        },
         "createdAt": {
           "type": "string",
           "format": "date-time"

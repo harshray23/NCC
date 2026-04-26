@@ -9,7 +9,7 @@ import {
   SidebarInset,
   SidebarFooter,
 } from "@/components/ui/sidebar"
-import { LayoutDashboard, Users, Tent, CalendarCheck, ArrowUpRight, Settings, LogOut, User, CalendarPlus } from "lucide-react"
+import { LayoutDashboard, Users, Tent, CalendarCheck, LogOut, User, CalendarPlus } from "lucide-react"
 import { Logo } from "@/components/logo"
 import { PortalHeader } from "@/components/portal-header"
 import Link from "next/link"
@@ -21,9 +21,9 @@ export default function AdminLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-[#0a0c0a] military-grid">
-        <Sidebar className="border-r border-white/5">
-          <SidebarHeader className="h-16 flex items-center px-6 border-b border-white/5">
+      <div className="flex min-h-screen w-full bg-background military-grid">
+        <Sidebar className="border-r border-border">
+          <SidebarHeader className="h-16 flex items-center px-6 border-b border-border">
             <Logo imageSrc="/emblem.jpg" className="scale-125" />
           </SidebarHeader>
           <SidebarContent className="px-4 py-6">
@@ -70,7 +70,7 @@ export default function AdminLayout({
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
-          <SidebarFooter className="p-4 border-t border-white/5">
+          <SidebarFooter className="p-4 border-t border-border">
             <SidebarMenu className="gap-2">
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip="Profile" className="h-11 opacity-70 hover:opacity-100">

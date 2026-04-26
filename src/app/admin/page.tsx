@@ -14,11 +14,9 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
-import { mockCadets, mockCamps, mockRegistrations, mockAttendance } from "@/lib/placeholder-data"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { mockCadets, mockCamps, mockRegistrations } from "@/lib/placeholder-data"
 
 const attendanceData = [
   { month: "MAR", percentage: 88 },
@@ -59,13 +57,11 @@ export default function AdminDashboardPage() {
           Icon={Users} 
           title="ACTIVE PERSONNEL" 
           value={String(totalCadets)} 
-          className="border-white/5 bg-black/40 backdrop-blur-sm"
         />
         <StatCard 
           Icon={Tent} 
           title="ACTIVE CAMPS" 
           value={String(activeCamps)} 
-          className="border-white/5 bg-black/40 backdrop-blur-sm"
         />
         <StatCard 
           Icon={UserCheck} 
@@ -77,13 +73,12 @@ export default function AdminDashboardPage() {
           Icon={Percent} 
           title="FORCE READINESS" 
           value={`${overallAttendancePercentage}%`} 
-          className="border-white/5 bg-black/40 backdrop-blur-sm"
         />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2 border-white/5 bg-black/40 backdrop-blur-md">
-          <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-6">
+        <Card className="lg:col-span-2 border-border bg-card/50 backdrop-blur-md">
+          <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-6">
             <div className="space-y-1">
               <CardTitle className="text-lg font-black tracking-tighter uppercase font-headline">ATTENDANCE TRENDS</CardTitle>
               <CardDescription className="text-xs uppercase tracking-widest text-muted-foreground/60">Historical participation data per cycle</CardDescription>
@@ -93,22 +88,22 @@ export default function AdminDashboardPage() {
           <CardContent className="pt-8">
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
               <BarChart data={attendanceData}>
-                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" className="opacity-10" />
                 <XAxis
                   dataKey="month"
                   tickLine={false}
                   tickMargin={10}
                   axisLine={false}
-                  tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 700 }}
+                  tick={{ fill: 'currentColor', fontSize: 10, fontWeight: 700, opacity: 0.5 }}
                 />
                 <YAxis 
                   domain={[0, 100]} 
                   unit="%" 
                   axisLine={false}
                   tickLine={false}
-                  tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }}
+                  tick={{ fill: 'currentColor', fontSize: 10, opacity: 0.5 }}
                 />
-                <ChartTooltip content={<ChartTooltipContent className="bg-black/90 border-white/10" />} />
+                <ChartTooltip content={<ChartTooltipContent className="bg-popover border-border" />} />
                 <Bar 
                   dataKey="percentage" 
                   fill="var(--color-percentage)" 
@@ -120,8 +115,8 @@ export default function AdminDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-white/5 bg-black/40 backdrop-blur-md">
-          <CardHeader className="border-b border-white/5 pb-6">
+        <Card className="border-border bg-card/50 backdrop-blur-md">
+          <CardHeader className="border-b border-border pb-6">
             <CardTitle className="text-lg font-black tracking-tighter uppercase font-headline">RECENT ACTIVITY</CardTitle>
             <CardDescription className="text-xs uppercase tracking-widest text-muted-foreground/60">Logs from the last 24 hours</CardDescription>
           </CardHeader>
@@ -131,7 +126,7 @@ export default function AdminDashboardPage() {
                 <div key={i} className="flex gap-4 items-start group">
                   <div className="mt-1 h-2 w-2 rounded-full bg-primary shadow-[0_0_8px_rgba(132,189,0,0.5)] group-hover:scale-125 transition-transform" />
                   <div className="space-y-1">
-                    <p className="text-xs font-bold text-white tracking-tight uppercase">Personnel Enrollment</p>
+                    <p className="text-xs font-bold text-foreground tracking-tight uppercase">Personnel Enrollment</p>
                     <p className="text-[10px] text-muted-foreground uppercase tracking-widest">Aarav Sharma registered for ATC</p>
                     <p className="text-[9px] text-primary/40 font-bold uppercase tracking-widest">14:20 HRS</p>
                   </div>

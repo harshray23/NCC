@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -25,6 +26,7 @@ export default function CadetProfilePage() {
 
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [displayName, setDisplayName] = React.useState("");
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
@@ -35,6 +37,7 @@ export default function CadetProfilePage() {
     if (cadet) {
       setEmail(cadet.email || "");
       setPhone(cadet.phone || "");
+      setDisplayName(cadet.displayName || "");
       setAvatarUrl(cadet.avatarUrl);
     }
   }, [cadet]);
@@ -64,22 +67,22 @@ export default function CadetProfilePage() {
     setIsSaving(true);
 
     try {
-      let newAvatarUrl = avatarUrl;
+      let finalAvatarUrl = avatarUrl;
       if (selectedFile) {
         const storage = getStorage();
         const storageRef = ref(storage, `profile-photos/${authUser.uid}`);
         
         toast({ title: "UPLOADING INTEL", description: "Securing image data..." });
         const snapshot = await uploadBytes(storageRef, selectedFile);
-        newAvatarUrl = await getDownloadURL(snapshot.ref);
-        setAvatarUrl(newAvatarUrl);
+        finalAvatarUrl = await getDownloadURL(snapshot.ref);
       }
 
       const userDocRef = doc(firestore, "users", authUser.uid);
       await updateDoc(userDocRef, {
+        displayName: displayName,
         email: email,
         phone: phone,
-        avatarUrl: newAvatarUrl,
+        avatarUrl: finalAvatarUrl,
         updatedAt: new Date().toISOString()
       });
 
@@ -87,6 +90,7 @@ export default function CadetProfilePage() {
         title: "DOSSIER UPDATED",
         description: "Personnel records have been securely modified.",
       });
+      setSelectedFile(null);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -95,12 +99,9 @@ export default function CadetProfilePage() {
       });
     } finally {
       setIsSaving(false);
-      setSelectedFile(null);
     }
   };
 
-  // If we are loading auth, or auth is done but we haven't even started loading the doc (path is empty)
-  // or the doc is currently loading.
   if (authLoading || (authUser && !cadetPath) || (cadetPath && cadetLoading)) {
     return (
       <div className="space-y-10">
@@ -144,7 +145,7 @@ export default function CadetProfilePage() {
      );
   }
 
-  const cadetInitial = cadet.displayName ? cadet.displayName.charAt(0) : 'C';
+  const cadetInitial = displayName.charAt(0).toUpperCase() || 'C';
 
   return (
     <div className="space-y-10">
@@ -161,8 +162,8 @@ export default function CadetProfilePage() {
       <div className="grid gap-8 lg:grid-cols-3">
         <Card className="lg:col-span-1 border-white/5 bg-black/40 backdrop-blur-md flex flex-col items-center p-8">
           <div className="relative group">
-            <Avatar className="h-40 w-40 border-2 border-white/5 group-hover:border-primary/50 transition-all duration-500 shadow-2xl">
-              <AvatarImage src={avatarUrl} alt={cadet.displayName} className="object-cover" />
+            <Avatar className="h-40 w-40 border-2 border-white/5 group-hover:border-primary/50 transition-all duration-500 shadow-2xl overflow-hidden">
+              <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
               <AvatarFallback className="text-4xl font-black bg-white/5">{cadetInitial}</AvatarFallback>
             </Avatar>
             <div className="absolute inset-0 rounded-full bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer" onClick={() => fileInputRef.current?.click()}>
@@ -171,7 +172,7 @@ export default function CadetProfilePage() {
           </div>
           
           <div className="mt-8 text-center space-y-2">
-            <h2 className="text-xl font-black tracking-tighter uppercase font-headline text-white">{cadet.displayName}</h2>
+            <h2 className="text-xl font-black tracking-tighter uppercase font-headline text-white">{displayName}</h2>
             <p className="text-[10px] font-bold text-primary tracking-[0.3em] uppercase">Phase {cadet.year} • {cadet.dept || 'UNIT'}</p>
           </div>
 
@@ -197,6 +198,17 @@ export default function CadetProfilePage() {
           <CardContent className="pt-8 space-y-8">
             <div className="grid gap-8 md:grid-cols-2">
               <div className="space-y-2">
+                 <Label htmlFor="displayName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <User className="w-3 h-3" /> Full Name
+                </Label>
+                <Input 
+                  id="displayName" 
+                  value={displayName} 
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
                   <Hash className="w-3 h-3" /> Regimental ID
                 </Label>
@@ -218,14 +230,6 @@ export default function CadetProfilePage() {
                 </Label>
                 <div className="h-11 px-3 flex items-center bg-white/5 border border-white/10 rounded font-mono text-xs text-white/40">
                   Phase {cadet.year}
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
-                  <Layers className="h-3 w-3" /> Assigned Branch
-                </Label>
-                <div className="h-11 px-3 flex items-center bg-white/5 border border-white/10 rounded font-mono text-xs text-white/40">
-                  {cadet.dept}
                 </div>
               </div>
             </div>

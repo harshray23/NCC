@@ -7,9 +7,6 @@ import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import {
   Table,
@@ -28,12 +25,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { MoreHorizontal, PlusCircle, Search, UserPlus, Users, Lock } from "lucide-react"
+import { MoreHorizontal, Search, UserPlus, Users, Lock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EditCadetDialog } from "@/components/edit-cadet-dialog"
-import type { User as Cadet, UserRole } from "@/lib/definitions"
+import type { User as Cadet } from "@/lib/definitions"
 import { useCollection, useUser, useDoc } from "@/firebase"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -50,10 +47,14 @@ import { query, where, orderBy } from "firebase/firestore"
 
 export default function ManageCadetsPage() {
   const { user: authUser } = useUser();
-  const { data: profile } = useDoc<Cadet>(authUser?.uid ? `users/${authUser.uid}` : '');
+  const { data: profile, loading: profileLoading } = useDoc<Cadet>(authUser?.uid ? `users/${authUser.uid}` : '');
+  
+  // Verify admin status before attempting to list users
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager';
 
-  const { data: cadets, loading, error } = useCollection<Cadet>("users", {
+  // Only attempt to fetch the collection if the user is confirmed as an admin
+  // Passing an empty string to useCollection prevents it from firing and causing a Permission Denied error
+  const { data: cadets, loading, error } = useCollection<Cadet>(isAdmin ? "users" : "", {
     q: (ref) => query(ref, where('role', '==', 'cadet'), orderBy('createdAt', 'desc'))
   });
 
@@ -91,13 +92,14 @@ export default function ManageCadetsPage() {
     }
   }
 
-  if (!isAdmin && !loading) {
+  // Handle unauthorized access or initial loading
+  if (!profileLoading && !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
         <div className="p-4 rounded-full bg-destructive/10 border border-destructive/20 text-destructive mb-4">
           <Lock className="w-12 h-12" />
         </div>
-        <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Access Denied</h1>
+        <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-foreground">Access Denied</h1>
         <p className="text-muted-foreground uppercase text-xs tracking-widest">Only unit staff may access the personnel roster.</p>
       </div>
     );
@@ -123,7 +125,7 @@ export default function ManageCadetsPage() {
               Enroll Cadet
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-black/90 border-white/10 backdrop-blur-xl sm:max-w-md">
+          <DialogContent className="bg-background/90 border-white/10 backdrop-blur-xl sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="font-headline tracking-tighter uppercase">NEW PERSONNEL ENTRY</DialogTitle>
               <DialogDescription className="text-xs uppercase tracking-widest">
@@ -184,7 +186,7 @@ export default function ManageCadetsPage() {
                               <SelectValue placeholder="YEAR" />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent className="bg-black/90 border-white/10">
+                          <SelectContent className="bg-background/90 border-white/10">
                             <SelectItem value="1">1ST YEAR</SelectItem>
                             <SelectItem value="2">2ND YEAR</SelectItem>
                             <SelectItem value="3">3RD YEAR</SelectItem>
@@ -205,7 +207,7 @@ export default function ManageCadetsPage() {
                               <SelectValue placeholder="DEPT" />
                             </SelectTrigger>
                            </FormControl>
-                          <SelectContent className="bg-black/90 border-white/10">
+                          <SelectContent className="bg-background/90 border-white/10">
                             <SelectItem value="CSE">CSE</SelectItem>
                             <SelectItem value="ECE">ECE</SelectItem>
                             <SelectItem value="ME">ME</SelectItem>
@@ -236,7 +238,7 @@ export default function ManageCadetsPage() {
         />
       )}
 
-      <Card className="border-white/5 bg-black/40 backdrop-blur-md">
+      <Card className="border-white/5 bg-card/40 backdrop-blur-md">
         <CardContent className="p-0">
           <Table>
             <TableHeader className="bg-white/5">
@@ -250,7 +252,7 @@ export default function ManageCadetsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {(loading || !isAdmin) && Array.from({ length: 5 }).map((_, i) => (
+              {(loading || profileLoading) && Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i} className="border-white/5">
                   <TableCell><Skeleton className="h-4 w-[150px] bg-white/5" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[120px] bg-white/5" /></TableCell>
@@ -260,10 +262,10 @@ export default function ManageCadetsPage() {
                   <TableCell className="text-right pr-6"><Skeleton className="h-8 w-8 bg-white/5 ml-auto" /></TableCell>
                 </TableRow>
               ))}
-              {!loading && isAdmin && cadets?.map((cadet) => (
+              {!loading && !profileLoading && cadets?.map((cadet) => (
                 <TableRow key={cadet.id} className="border-white/5 hover:bg-white/5 transition-colors group">
                   <TableCell className="font-mono text-xs text-primary/80 py-6">{cadet.regimentalNumber}</TableCell>
-                  <TableCell className="text-sm font-bold text-white uppercase tracking-tight">{cadet.displayName}</TableCell>
+                  <TableCell className="text-sm font-bold text-foreground uppercase tracking-tight">{cadet.displayName}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="text-[9px] font-black uppercase tracking-widest border-primary/20 bg-primary/5 text-primary">
                       {cadet.rank || 'CDT'}
@@ -274,7 +276,7 @@ export default function ManageCadetsPage() {
                       Phase {cadet.year}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs font-bold text-white/40">{cadet.dept}</TableCell>
+                  <TableCell className="text-xs font-bold text-foreground/40">{cadet.dept}</TableCell>
                   <TableCell className="text-right pr-6">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -282,7 +284,7 @@ export default function ManageCadetsPage() {
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-black/90 border-white/10 backdrop-blur-xl">
+                      <DropdownMenuContent align="end" className="bg-background/90 border-white/10 backdrop-blur-xl">
                         <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Operations</DropdownMenuLabel>
                         <DropdownMenuItem className="text-xs uppercase tracking-widest focus:bg-primary focus:text-primary-foreground" onClick={() => setEditingCadet(cadet)}>Modify File</DropdownMenuItem>
                         <DropdownMenuItem className="text-xs uppercase tracking-widest focus:bg-primary focus:text-primary-foreground">Full Dossier</DropdownMenuItem>
@@ -295,7 +297,7 @@ export default function ManageCadetsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-               {!loading && isAdmin && cadets?.length === 0 && (
+               {!loading && !profileLoading && cadets?.length === 0 && (
                 <TableRow className="border-none">
                   <TableCell colSpan={6} className="h-64 text-center">
                     <div className="flex flex-col items-center gap-2 opacity-30">

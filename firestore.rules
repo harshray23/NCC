@@ -14,12 +14,20 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Checks if user has admin role either in token or in their document
     function isAdmin() {
-      return isAuthenticated() && request.auth.token.role == 'admin';
+      return isAuthenticated() && (
+        request.auth.token.role == 'admin' || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
     }
 
+    // Checks if user has manager role either in token or in their document
     function isManager() {
-      return isAuthenticated() && request.auth.token.role == 'manager';
+      return isAuthenticated() && (
+        request.auth.token.role == 'manager' || 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager'
+      );
     }
 
     function isAdminOrManager() {

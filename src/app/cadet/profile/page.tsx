@@ -13,7 +13,7 @@ import { useUser, useFirestore, useDoc } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage"
 import type { User as UserDef } from "@/lib/definitions"
-import { Shield, User, Smartphone, Mail, Hash, Calendar, Layers, Lock } from "lucide-react"
+import { Shield, User, Smartphone, Mail, Hash, Calendar, Lock } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function CadetProfilePage() {
@@ -257,7 +257,7 @@ export default function CadetProfilePage() {
                   id="phone" 
                   type="tel" 
                   value={phone} 
-                  placeholder="+91 XXXXX XXXXX"
+                  placeholder="+91 00000 00000"
                   onChange={(e) => setPhone(e.target.value)}
                   className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
                 />

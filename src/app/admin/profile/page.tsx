@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -219,6 +220,7 @@ export default function AdminProfilePage() {
                   id="phone" 
                   type="tel" 
                   value={phone} 
+                  placeholder="+91 00000 00000"
                   onChange={(e) => setPhone(e.target.value)}
                   className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
                 />

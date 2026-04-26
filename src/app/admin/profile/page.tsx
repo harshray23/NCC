@@ -10,10 +10,11 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
 import { useUser, useDoc, useFirestore, useStorage } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import type { User as UserDef } from "@/lib/definitions"
-import { ShieldCheck, Mail, Smartphone, User, Shield, Lock, Camera } from "lucide-react"
+import { ShieldCheck, Mail, Smartphone, User, Shield, Lock, Camera, Loader2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Progress } from "@/components/ui/progress"
 
 export default function AdminProfilePage() {
   const { toast } = useToast();
@@ -27,11 +28,12 @@ export default function AdminProfilePage() {
   const [displayName, setDisplayName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
+  const [avatarUrl, setAvatarUrl] = React.useState<string>("");
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = React.useState<string>("");
   const [isSaving, setIsSaving] = React.useState(false);
+  const [uploadProgress, setUploadProgress] = React.useState(0);
 
   React.useEffect(() => {
      if(staff) {
@@ -67,15 +69,32 @@ export default function AdminProfilePage() {
       return;
     }
     setIsSaving(true);
+    setUploadProgress(0);
 
     try {
-      let finalAvatarUrl = staff?.avatarUrl || "";
+      let finalAvatarUrl = avatarUrl || "";
       
       if (selectedFile) {
         const storageRef = ref(storage, `profile-photos/${authUser.uid}`);
-        toast({ title: "UPLOADING IDENT", description: "Securing file..." });
-        const snapshot = await uploadBytes(storageRef, selectedFile);
-        finalAvatarUrl = await getDownloadURL(snapshot.ref);
+        const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+
+        await new Promise((resolve, reject) => {
+          uploadTask.on(
+            "state_changed",
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgress(progress);
+            },
+            (error) => {
+              toast({ variant: "destructive", title: "UPLOAD FAILED", description: error.message });
+              reject(error);
+            },
+            async () => {
+              finalAvatarUrl = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(finalAvatarUrl);
+            }
+          );
+        });
       }
 
       const userDocRef = doc(firestore, "users", authUser.uid);
@@ -92,6 +111,7 @@ export default function AdminProfilePage() {
         description: "Staff dossier modified successfully.",
       });
       setSelectedFile(null);
+      setUploadProgress(0);
     } catch (error: any) {
       toast({
         variant: "destructive",
@@ -164,14 +184,26 @@ export default function AdminProfilePage() {
             <p className="text-[10px] font-bold text-primary tracking-[0.3em] uppercase">Staff Officer • Admin</p>
           </div>
 
-          <Button 
-            type="button" 
-            variant="outline" 
-            className="mt-8 w-full border-white/10 hover:bg-white/5 text-[10px] font-black tracking-widest uppercase h-11" 
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Update Photo
-          </Button>
+          <div className="w-full mt-8 space-y-4">
+            {uploadProgress > 0 && uploadProgress < 100 && (
+              <div className="space-y-2">
+                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-primary">
+                  <span>Transferring ID Data</span>
+                  <span>{Math.round(uploadProgress)}%</span>
+                </div>
+                <Progress value={uploadProgress} className="h-1 bg-white/5" />
+              </div>
+            )}
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full border-white/10 hover:bg-white/5 text-[10px] font-black tracking-widest uppercase h-11" 
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isSaving}
+            >
+              Update Photo
+            </Button>
+          </div>
           <Input id="picture" type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} accept="image/*" />
         </Card>
 
@@ -232,9 +264,14 @@ export default function AdminProfilePage() {
               <Button 
                 onClick={handleSaveChanges} 
                 disabled={isSaving}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-black tracking-[0.2em] uppercase px-8 h-12"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-black tracking-[0.2em] uppercase px-8 h-12 min-w-[200px]"
               >
-                {isSaving ? 'AUTHORIZING...' : 'UPDATE COMMAND FILE'}
+                {isSaving ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Synchronizing...</span>
+                  </div>
+                ) : 'UPDATE COMMAND FILE'}
               </Button>
             </div>
           </CardContent>

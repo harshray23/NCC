@@ -13,9 +13,10 @@ import { useUser, useFirestore, useDoc, useStorage } from "@/firebase"
 import { doc, updateDoc } from "firebase/firestore"
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage"
 import type { User as UserDef } from "@/lib/definitions"
-import { Shield, User, Smartphone, Mail, Hash, Lock, Camera, Loader2 } from "lucide-react"
+import { Shield, User, Smartphone, Mail, Hash, Lock, Camera, Loader2, Building2, MapPin, CreditCard, Users2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function CadetProfilePage() {
   const { toast } = useToast();
@@ -26,10 +27,16 @@ export default function CadetProfilePage() {
   const cadetPath = authUser?.uid ? `users/${authUser.uid}` : '';
   const { data: cadet, loading: cadetLoading } = useDoc<UserDef>(cadetPath);
 
+  // Form states
   const [email, setEmail] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [displayName, setDisplayName] = React.useState("");
   const [avatarUrl, setAvatarUrl] = React.useState<string>("");
+  const [collegeName, setCollegeName] = React.useState("");
+  const [rank, setRank] = React.useState("");
+  const [address, setAddress] = React.useState("");
+  const [aadharNumber, setAadharNumber] = React.useState("");
+  const [guardianName, setGuardianName] = React.useState("");
   
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
@@ -41,6 +48,12 @@ export default function CadetProfilePage() {
       setEmail(cadet.email || "");
       setPhone(cadet.phone || "");
       setDisplayName(cadet.displayName || "");
+      setCollegeName(cadet.collegeName || "");
+      setRank(cadet.rank || "CDT");
+      setAddress(cadet.address || "");
+      setAadharNumber(cadet.aadharNumber || "");
+      setGuardianName(cadet.guardianName || "");
+      
       if (!selectedFile) {
         setAvatarUrl(cadet.avatarUrl || "");
       }
@@ -102,9 +115,14 @@ export default function CadetProfilePage() {
 
       const userDocRef = doc(firestore, "users", authUser.uid);
       await updateDoc(userDocRef, {
-        displayName: displayName,
-        email: email,
-        phone: phone,
+        displayName,
+        email,
+        phone,
+        collegeName,
+        rank,
+        address,
+        aadharNumber,
+        guardianName,
         avatarUrl: finalAvatarUrl,
         updatedAt: new Date().toISOString()
       });
@@ -191,7 +209,7 @@ export default function CadetProfilePage() {
           
           <div className="mt-8 text-center space-y-2">
             <h2 className="text-xl font-black tracking-tighter uppercase font-headline text-white">{displayName}</h2>
-            <p className="text-[10px] font-bold text-primary tracking-[0.3em] uppercase">Phase {cadet.year} • {cadet.dept || 'UNIT'}</p>
+            <p className="text-[10px] font-bold text-primary tracking-[0.3em] uppercase">{rank} • Phase {cadet.year} • {cadet.dept || 'UNIT'}</p>
           </div>
 
           <div className="w-full mt-8 space-y-4">
@@ -221,7 +239,8 @@ export default function CadetProfilePage() {
           <CardHeader className="border-b border-white/5 pb-6">
             <CardTitle className="text-sm font-black tracking-widest uppercase font-headline">Service Specifications</CardTitle>
           </CardHeader>
-          <CardContent className="pt-8 space-y-8">
+          <CardContent className="pt-8 space-y-10">
+            {/* Basic Info */}
             <div className="grid gap-8 md:grid-cols-2">
               <div className="space-y-2">
                  <Label htmlFor="displayName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
@@ -244,6 +263,41 @@ export default function CadetProfilePage() {
               </div>
             </div>
 
+            {/* Rank and College */}
+            <div className="grid gap-8 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="rank" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Shield className="w-3 h-3" /> NCC Rank
+                </Label>
+                <Select value={rank} onValueChange={setRank}>
+                  <SelectTrigger className="bg-white/5 border-white/10 h-11">
+                    <SelectValue placeholder="SELECT RANK" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-black/90 border-white/10">
+                    <SelectItem value="CDT">CDT (CADET)</SelectItem>
+                    <SelectItem value="LCPL">LCPL (LANCE CORPORAL)</SelectItem>
+                    <SelectItem value="CPL">CPL (CORPORAL)</SelectItem>
+                    <SelectItem value="SGT">SGT (SERGEANT)</SelectItem>
+                    <SelectItem value="UO">UO (UNDER OFFICER)</SelectItem>
+                    <SelectItem value="SUO">SUO (SENIOR UNDER OFFICER)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="collegeName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Building2 className="w-3 h-3" /> College/Institution
+                </Label>
+                <Input 
+                  id="collegeName" 
+                  value={collegeName} 
+                  placeholder="E.G. ASANSOL ENGINEERING COLLEGE"
+                  onChange={(e) => setCollegeName(e.target.value)}
+                  className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Contact and Identification */}
             <div className="grid gap-8 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
@@ -270,6 +324,48 @@ export default function CadetProfilePage() {
                   className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
                 />
               </div>
+            </div>
+
+             {/* Personal and Legal Details */}
+             <div className="grid gap-8 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="guardianName" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <Users2 className="h-3 w-3" /> Parent/Guardian Name
+                </Label>
+                <Input 
+                  id="guardianName" 
+                  value={guardianName} 
+                  placeholder="GUARDIAN FULL NAME"
+                  onChange={(e) => setGuardianName(e.target.value)}
+                  className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="aadharNumber" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                  <CreditCard className="h-3 w-3" /> Aadhar Identification
+                </Label>
+                <Input 
+                  id="aadharNumber" 
+                  value={aadharNumber} 
+                  placeholder="0000 0000 0000"
+                  onChange={(e) => setAadharNumber(e.target.value)}
+                  className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="space-y-2">
+              <Label htmlFor="address" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 flex items-center gap-2">
+                <MapPin className="h-3 w-3" /> Residential Address
+              </Label>
+              <Input 
+                id="address" 
+                value={address} 
+                placeholder="FULL POSTAL ADDRESS"
+                onChange={(e) => setAddress(e.target.value)}
+                className="bg-white/5 border-white/10 h-11 focus:border-primary/50 text-sm"
+              />
             </div>
 
             <div className="flex justify-end pt-4">

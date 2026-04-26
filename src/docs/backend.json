@@ -32,6 +32,30 @@
             "type": "number",
             "description": "The user's year of study (for cadets)."
         },
+        "dept": {
+          "type": "string",
+          "description": "Academic department."
+        },
+        "rank": {
+          "type": "string",
+          "description": "NCC Rank (CDT, CPL, SGT, etc.)"
+        },
+        "collegeName": {
+          "type": "string",
+          "description": "Name of the institution."
+        },
+        "address": {
+          "type": "string",
+          "description": "Residential address."
+        },
+        "aadharNumber": {
+          "type": "string",
+          "description": "Aadhar identification number."
+        },
+        "guardianName": {
+          "type": "string",
+          "description": "Name of parent or guardian."
+        },
         "avatarUrl": {
           "type": "string",
           "description": "The URL of the user's profile picture."

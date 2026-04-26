@@ -1,3 +1,4 @@
+
 export type UserRole = 'cadet' | 'admin' | 'manager';
 
 export type User = {
@@ -10,6 +11,10 @@ export type User = {
   year?: number; // Only for cadets
   dept?: string;
   rank?: string;
+  collegeName?: string;
+  address?: string;
+  aadharNumber?: string;
+  guardianName?: string;
   createdAt: any; // Can be Timestamp
   updatedAt: any; // Can be Timestamp
   avatarUrl?: string;

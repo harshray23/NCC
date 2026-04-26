@@ -1,7 +1,7 @@
 {
   "indexes": [
     {
-      "collectionGroup": "users",
+      "collectionId": "users",
       "queryScope": "COLLECTION",
       "fields": [
         {
@@ -13,6 +13,21 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionId": "registrations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "uid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
     }
-  ]
+  ],
+  "fieldOverrides": []
 }

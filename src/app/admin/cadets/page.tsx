@@ -1,4 +1,3 @@
-
 "use client"
 import * as React from "react"
 import { useForm } from "react-hook-form"
@@ -29,13 +28,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { MoreHorizontal, PlusCircle, Search, UserPlus, Users } from "lucide-react"
+import { MoreHorizontal, PlusCircle, Search, UserPlus, Users, Lock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { EditCadetDialog } from "@/components/edit-cadet-dialog"
-import type { User as Cadet } from "@/lib/definitions"
-import { useCollection } from "@/firebase"
+import type { User as Cadet, UserRole } from "@/lib/definitions"
+import { useCollection, useUser, useDoc } from "@/firebase"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Form,
@@ -50,7 +49,11 @@ import { useToast } from "@/hooks/use-toast"
 import { query, where, orderBy } from "firebase/firestore"
 
 export default function ManageCadetsPage() {
-  const { data: cadets, loading } = useCollection<Cadet>("users", {
+  const { user: authUser } = useUser();
+  const { data: profile } = useDoc<Cadet>(authUser?.uid ? `users/${authUser.uid}` : '');
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager';
+
+  const { data: cadets, loading, error } = useCollection<Cadet>("users", {
     q: (ref) => query(ref, where('role', '==', 'cadet'), orderBy('createdAt', 'desc'))
   });
 
@@ -86,6 +89,18 @@ export default function ManageCadetsPage() {
         description: error.message || "Unknown protocol error.",
       });
     }
+  }
+
+  if (!isAdmin && !loading) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+        <div className="p-4 rounded-full bg-destructive/10 border border-destructive/20 text-destructive mb-4">
+          <Lock className="w-12 h-12" />
+        </div>
+        <h1 className="text-2xl font-black uppercase tracking-tighter font-headline text-white">Access Denied</h1>
+        <p className="text-muted-foreground uppercase text-xs tracking-widest">Only unit staff may access the personnel roster.</p>
+      </div>
+    );
   }
 
   return (
@@ -235,7 +250,7 @@ export default function ManageCadetsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading && Array.from({ length: 5 }).map((_, i) => (
+              {(loading || !isAdmin) && Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i} className="border-white/5">
                   <TableCell><Skeleton className="h-4 w-[150px] bg-white/5" /></TableCell>
                   <TableCell><Skeleton className="h-4 w-[120px] bg-white/5" /></TableCell>
@@ -245,7 +260,7 @@ export default function ManageCadetsPage() {
                   <TableCell className="text-right pr-6"><Skeleton className="h-8 w-8 bg-white/5 ml-auto" /></TableCell>
                 </TableRow>
               ))}
-              {!loading && cadets?.map((cadet) => (
+              {!loading && isAdmin && cadets?.map((cadet) => (
                 <TableRow key={cadet.id} className="border-white/5 hover:bg-white/5 transition-colors group">
                   <TableCell className="font-mono text-xs text-primary/80 py-6">{cadet.regimentalNumber}</TableCell>
                   <TableCell className="text-sm font-bold text-white uppercase tracking-tight">{cadet.displayName}</TableCell>
@@ -280,7 +295,7 @@ export default function ManageCadetsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-               {!loading && cadets?.length === 0 && (
+               {!loading && isAdmin && cadets?.length === 0 && (
                 <TableRow className="border-none">
                   <TableCell colSpan={6} className="h-64 text-center">
                     <div className="flex flex-col items-center gap-2 opacity-30">

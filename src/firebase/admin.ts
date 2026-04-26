@@ -1,8 +1,12 @@
+import { cert, getApps, initializeApp, getApp, App } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import * as dotenv from 'dotenv';
 
-import * as admin from 'firebase-admin';
-import { cert, getApps, initializeApp, getApp } from 'firebase-admin/app';
+// Load environment variables immediately
+dotenv.config();
 
-function getAdminApp() {
+function getAdminApp(): App | null {
   if (getApps().length > 0) {
     return getApp();
   }
@@ -25,22 +29,25 @@ function getAdminApp() {
 
   // Handle potential double-escaped newlines and multi-line strings
   privateKey = privateKey.replace(/\\n/g, '\n');
-  // If it's wrapped in extra quotes from .env, strip them
   if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
     privateKey = privateKey.substring(1, privateKey.length - 1);
   }
 
-  return initializeApp({
-    credential: cert({
-      projectId,
-      clientEmail,
-      privateKey,
-    }),
-  });
+  try {
+    return initializeApp({
+      credential: cert({
+        projectId,
+        clientEmail,
+        privateKey,
+      }),
+    });
+  } catch (error) {
+    console.error('Firebase Admin init error:', error);
+    return null;
+  }
 }
 
 const app = getAdminApp();
 
-// Only export auth and db if app was successfully initialized to avoid crash on import
-export const auth = app ? admin.auth(app) : ({} as admin.auth.Auth);
-export const db = app ? admin.firestore(app) : ({} as admin.firestore.Firestore);
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;

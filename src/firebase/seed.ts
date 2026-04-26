@@ -1,25 +1,13 @@
-
-import dotenv from 'dotenv';
-// Load environment variables before any other imports
-dotenv.config();
-
-import { firestore } from 'firebase-admin';
 import { auth, db } from './admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const seedDatabase = async () => {
   console.log('--- COMMAND PORTAL DATABASE SEED INITIALIZED ---');
   
-  // Verify Env Vars
-  const requiredVars = ['FIREBASE_PROJECT_ID', 'FIREBASE_CLIENT_EMAIL', 'FIREBASE_PRIVATE_KEY'];
-  const missing = requiredVars.filter(v => !process.env[v]);
-  
-  if (missing.length > 0) {
-    console.error('CRITICAL ERROR: Missing environment variables in .env:', missing.join(', '));
-    console.error('Please ensure your .env file is in the project root and contains these keys.');
+  if (!auth || !db) {
+    console.error('CRITICAL ERROR: Firebase Admin not initialized. Check your .env file.');
     process.exit(1);
   }
-
-  const serverTimestamp = firestore.FieldValue.serverTimestamp();
 
   const usersToSeed = [
     {
@@ -66,17 +54,15 @@ const seedDatabase = async () => {
         }
       }
 
-      // 2. Set custom claim for role-based access control
       await auth.setCustomUserClaims(userRecord.uid, { role: userData.role });
       console.log(`- SECURITY CLAIMS ASSIGNED: role=${userData.role}`);
 
-      // 3. Create a corresponding user document in Firestore
       const userDoc: { [key: string]: any; } = {
         displayName: userData.displayName,
         email: userData.email,
         role: userData.role,
-        createdAt: serverTimestamp,
-        updatedAt: serverTimestamp,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         phone: '',
       };
 

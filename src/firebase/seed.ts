@@ -1,10 +1,10 @@
 
+import dotenv from 'dotenv';
+// Load environment variables before any other imports
+dotenv.config();
+
 import { firestore } from 'firebase-admin';
 import { auth, db } from './admin';
-import dotenv from 'dotenv';
-
-// Load environment variables from .env file
-dotenv.config();
 
 const seedDatabase = async () => {
   console.log('--- COMMAND PORTAL DATABASE SEED INITIALIZED ---');
@@ -14,8 +14,8 @@ const seedDatabase = async () => {
   const missing = requiredVars.filter(v => !process.env[v]);
   
   if (missing.length > 0) {
-    console.error('CRITICAL ERROR: Missing environment variables:', missing.join(', '));
-    console.error('Ensure your .env file is correctly configured.');
+    console.error('CRITICAL ERROR: Missing environment variables in .env:', missing.join(', '));
+    console.error('Please ensure your .env file is in the project root and contains these keys.');
     process.exit(1);
   }
 

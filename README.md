@@ -1,58 +1,105 @@
-it NCC Management System
+# 🎖️ NCC Management System
 
-A modern web-based system for managing NCC cadets, camps, training programs, and daily practice activities.
+A modern, cloud-based platform to manage NCC cadets, camps, training programs, and daily activities—built for efficiency, scalability, and real-time tracking.
 
-✨ Project Overview
 
-The NCC Management System is a full-stack web application designed to digitize and streamline the management of NCC camps, training sessions, daily practice schedules, and cadet records.
-It enables NCC officers and administrators to efficiently organize activities while maintaining accurate, real-time records using cloud technology.
+---
 
-🎯 Key Features
-👤 Cadet Management
+## 🧠 Overview
 
-Create and manage cadet profiles
+The NCC Management System is a full-stack web application designed to replace manual record-keeping with a centralized digital system.
 
-Store personal details, rank, unit, and attendance
+It enables:
 
-🏕️ Camp Management
+- Efficient cadet data management  
+- Structured training and camp organization  
+- Real-time attendance tracking  
+- Cloud-based data storage  
 
-Organize NCC camps with schedules and locations
+---
 
-Assign cadets to camps
+## ✨ Features
 
-Track participation and attendance
+### 👤 Cadet Management
+- Create, update, and manage cadet profiles  
+- Store rank, unit, and personal details  
+- Attendance tracking  
 
-🏃 Training Management
+### 🏕️ Camp Management
+- Create and schedule camps  
+- Assign cadets  
+- Track participation  
 
-Schedule training programs
+### 🏃 Training Management
+- Schedule training sessions  
+- Assign instructors  
+- Monitor progress  
 
-Assign instructors and cadets
+### 📅 Daily Practice Tracking
+- Manage daily schedules  
+- Record attendance  
+- Maintain logs  
 
-Monitor training progress
+### ☁️ Cloud Integration
+- Real-time updates via Firebase Firestore  
+- Scalable and secure storage  
 
-📅 Daily Practice Tracking
+---
 
-Manage daily practice schedules
+---
 
-Record attendance
+## 🛠️ Tech Stack
 
-Maintain activity logs
+### Frontend
+- Next.js  
+- React  
+- TypeScript  
 
-☁️ Cloud-Based Data Storage
+### Backend
+- Node.js  
 
-Real-time data storage using Firebase Firestore
+### Database
+- Firebase Firestore  
 
-Secure and scalable backend
+---
 
-🛠️ Tech Stack
-Frontend
+## ⚙️ Getting Started
 
-Next.js – Server-side rendering & routing
+1️⃣ Clone the Repository
+```bash
+git clone https://github.com/your-username/ncc-management-system.git
+cd ncc-management-system
 
-React – UI component architecture
+2️⃣ Install Dependencies
+npm install
 
-TypeScript – Type-safe development
+3️⃣ Setup Environment Variables
 
-Backend
+Create a .env.local file in the root directory:
 
-Node.js – Server-side runtime
+NEXT_PUBLIC_FIREBASE_API_KEY=your_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_domain
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_bucket
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+
+4️⃣ Run the Development Server
+npm run dev
+
+App will run at:
+👉 http://localhost:3000
+
+📂 Project Structure
+ncc-management-system/
+├── components/
+├── pages/
+├── services/
+├── utils/
+├── public/
+├── styles/
+└── screenshots/
+
+🤝 Contributing
+
+Pull requests are welcome. For major changes, open an issue first.
